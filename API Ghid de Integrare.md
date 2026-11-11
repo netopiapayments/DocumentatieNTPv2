@@ -2,7 +2,7 @@
 
 # NETOPIA Financial Services S.A. — API Ghid de Integrare
 
-> Versiune document: 2.8
+> Versiune document: 2.9
 > 
 > Ultima actualizare: 11 Noiembrie 2026
 > 
@@ -24,8 +24,9 @@
 8. [Funcționalități Speciale](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#7-funcționalități-speciale)
 9. [Referințe](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#8-referințe)
 10. [Integrare Directă Card](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#9-integrare-directă-card)
-11. [Glosar de Termeni](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#glosar-de-termeni--netopia-api-v2)
-12. [Versionare Document](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#10-versionare-document)
+11. [Integrare Automată (SDK, CLI și Agent AI)](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#10-integrare-automată-sdk-cli-și-agent-ai)
+12. [Glosar de Termeni](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#glosar-de-termeni--netopia-api-v2)
+13. [Versionare Document](https://netopia.atlassian.net/wiki/spaces/NE/pages/636125186/API+Ghid+de+Integrare#11-versionare-document)
 
 ---
 
@@ -711,6 +712,152 @@ Dacă banca emitentă a cardului solicită o verificare suplimentară, obiectul 
 
 ---
 
+## 10. Integrare Automată (SDK, CLI și Agent AI)
+
+Pe lângă integrarea manuală descrisă în secțiunile 4–7, proiectele **Node.js** pot fi integrate automat cu pachetul `netopia`. Pachetul conține un client API, o comandă care generează integrarea în proiect și un skill pentru agenți AI. Rezultatul respectă același flux: inițiere plată, redirect, IPN verificat, status, refund și expirare.
+
+> **IMPORTANT:** Pachetul `netopia` este în pregătire și nu este încă publicat în registrul npm. Până la publicare, comenzile `npx netopia …` de mai jos nu sunt disponibile public.
+
+### 10.1 Ce conține pachetul
+
+| **Componentă** | **Rol** |
+| --- | --- |
+| SDK (`import { Netopia } from 'netopia'`) | Client fără dependențe pentru /payment/card/start, /operation/status, /operation/credit, /operation/expire și verificarea IPN (JWT RS512 + SHA-512). |
+| CLI (`npx netopia init`) | Detectează proiectul, scrie credențialele, instalează pachetul și generează rutele de plată. |
+| Skill pentru agenți AI (`npx netopia skill`) | Instrucțiuni pentru agenți AI (ex. Claude Code) care completează integrarea în codul existent sau o scriu în alt limbaj, pe baza acestui ghid. |
+
+### 10.2 Ce aveți nevoie
+
+- Cheia API a mediului ales (Secțiunea 3.1) — Sandbox sau Producție.
+- Semnătura POS (Secțiunea 3.2), în formatul `XXXX-XXXX-XXXX-XXXX-XXXX`.
+- POS ID — necesar pentru interogarea statusului și expirarea linkului.
+- Un URL public HTTPS al aplicației, la care NETOPIA poate trimite IPN-ul.
+- Node.js 18.17 sau mai nou și un proiect **Next.js (App Router)**, **Express** sau Node.js fără framework.
+
+### 10.3 Integrare cu CLI
+
+Rulați comanda din rădăcina proiectului și răspundeți la întrebări:
+
+```bash
+npx netopia init
+```
+
+| **Pas** | **Acțiune** | **Detalii** |
+| --- | --- | --- |
+| 1 | Detectare proiect | Next.js (App Router, TypeScript sau JavaScript), Express (ESM sau CommonJS) sau Node.js fără framework; npm, pnpm, yarn sau bun. |
+| 2 | Credențiale | Cheia API, semnătura POS, POS ID-ul și URL-ul public sunt scrise în `.env` (Express / Node) sau `.env.local` (Next.js), cu acces doar pentru proprietar. Fișierul este adăugat în `.gitignore`, iar cheia nu este afișată. |
+| 3 | Instalare | Se instalează pachetul `netopia` cu managerul de pachete al proiectului. |
+| 4 | Rute generate | POST /api/netopia/start (inițiere plată), POST /api/netopia/notify (IPN), GET /netopia/return (pagina de revenire). |
+| 5 | Montare (Express) | Routerul este adăugat imediat după `express()`, înainte de `express.json()`, pentru ca IPN-ul să primească body-ul brut. |
+| 6 | Fișier cu hook-uri | `resolveOrder` și `onPaymentUpdate` — logica magazinului. Acest fișier nu este suprascris niciodată de comandă. |
+
+Pentru rulare fără întrebări (servere de build, agenți AI), transmiteți secretele prin variabile de mediu, nu ca argumente în linia de comandă:
+
+```bash
+NETOPIA_API_KEY='…' NETOPIA_POS_SIGNATURE='XXXX-XXXX-XXXX-XXXX-XXXX' NETOPIA_POS_ID='…' \
+  npx netopia init --yes --app-url https://www.your-domain.com
+```
+
+| **Opțiune** | **Efect** |
+| --- | --- |
+| `--production` | Configurează mediul Producție (implicit: Sandbox). |
+| `--app-url <url>` | URL-ul public din care se formează notifyUrl și redirectUrl. |
+| `--framework next\|express\|node` | Suprascrie detectarea automată. |
+| `--no-install` | Nu instalează pachetul. |
+| `--no-mount` | (Express) Nu modifică fișierul aplicației. |
+| `--force` | Regenerează rutele (fișierul cu hook-uri rămâne neatins). |
+
+### 10.4 Ce rămâne de implementat
+
+Comanda generează tot ce ține de NETOPIA. Logica magazinului rămâne în sarcina dvs.:
+
+1. **resolveOrder** — calculați suma pe server, din coș sau din baza de date. Nu folosiți suma trimisă de browser. Rutele generate refuză plățile în Producție până când această funcție este implementată.
+2. **onPaymentUpdate** — actualizați comanda la fiecare IPN verificat; marcați-o plătită doar la status 3 sau 5 (Secțiunea 8.1). Salvați ntpID-ul și, dacă ați trimis clientID, token-ul (Secțiunea 7.1). Funcția trebuie să fie idempotentă, deoarece NETOPIA poate retrimite aceeași notificare.
+3. **Butonul de plată** — apelați ruta de inițiere și redirecționați clientul:
+
+```js
+const res = await fetch('/api/netopia/start', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ orderID: 'COMANDA-123' }),
+});
+const { paymentURL, customerAction, error } = await res.json();
+if (paymentURL) window.location.href = paymentURL;
+```
+
+4. **3-D Secure** — dacă răspunsul conține customerAction (status 15), urmați pașii din Secțiunea 9.3.
+5. **URL public** — NETOPIA nu poate trimite IPN la localhost. În dezvoltare, expuneți aplicația printr-un tunel HTTPS și rulați din nou comanda cu `--app-url <url public>`.
+
+### 10.5 Integrare cu un agent AI
+
+```bash
+npx netopia skill
+```
+
+Comanda copiază skill-ul în `.claude/skills/netopia-integration/`. La o cerere de tipul „integrează plățile NETOPIA”, agentul:
+
+- folosește CLI-ul pentru Next.js și Express, apoi completează `resolveOrder`, `onPaymentUpdate` și butonul de plată în codul existent;
+- pentru alte framework-uri Node.js folosește SDK-ul direct;
+- pentru PHP, Python, Java, .NET sau alte limbaje scrie integrarea nativ, după acest ghid (inclus în skill);
+- verifică la final regulile obligatorii din Secțiunea 10.8.
+
+> **IMPORTANT:** Nu scrieți cheia API în conversația cu agentul: tot ce scrieți ajunge la furnizorul modelului AI. Setați variabilele NETOPIA_API_KEY, NETOPIA_POS_SIGNATURE și NETOPIA_POS_ID în terminal sau în fișierul `.env` înainte de a porni agentul.
+
+### 10.6 Utilizare directă a SDK-ului
+
+```js
+import { Netopia, IPN_ACK, parseIpn } from 'netopia';
+
+const netopia = Netopia.fromEnv();
+
+// Inițiere plată → redirect la paymentURL
+const { paymentURL, orderID } = await netopia.startPayment({
+  amount: 100,
+  currency: 'RON',
+  description: 'Comanda 123',
+  billing: { email: 'client@example.com', firstName: 'Ion', lastName: 'Popescu', city: 'Bucuresti' },
+});
+
+// notifyUrl — verificați body-ul BRUT, înainte de orice parsare
+const check = netopia.verifyIpn(rawBody, req.headers);
+if (check.valid) {
+  const ipn = parseIpn(check.payload); // { orderID, ntpID, status, paid, token, … }
+  // actualizați comanda, apoi răspundeți HTTP 200 cu IPN_ACK ({ "errorCode": 0 })
+}
+
+await netopia.getStatus({ ntpID, orderID });
+await netopia.refund({ ntpID, amount: 50 }); // refund parțial
+await netopia.expire({ ntpID, orderID });
+
+// Plăți recurente: prima plată cu { clientID }, ulterior { token, scaExemptionInd: 'MIT', ipAddress }
+```
+
+SDK-ul acceptă și opțiunile din Secțiunea 7: `split`, `installments`, `clientID`, `token` și `scaExemptionInd`. Money Send (7.4) și integrarea directă card (Secțiunea 9) nu sunt incluse.
+
+### 10.7 Variabile de mediu
+
+| **Variabilă** | **Rol** |
+| --- | --- |
+| `NETOPIA_API_KEY` | Cheia API — diferită pentru Sandbox și Producție. |
+| `NETOPIA_POS_SIGNATURE` | Semnătura POS. |
+| `NETOPIA_POS_ID` | POS ID — pentru status și expirare. |
+| `NETOPIA_SANDBOX` | `true` (implicit) sau `false` pentru Producție. |
+| `NETOPIA_APP_URL` | URL-ul public; din el rezultă notifyUrl (`/api/netopia/notify`) și redirectUrl (`/netopia/return`). |
+| `NETOPIA_NOTIFY_URL`, `NETOPIA_REDIRECT_URL`, `NETOPIA_CANCEL_URL` | Suprascriu URL-urile deduse. |
+
+### 10.8 Securitate și verificări înainte de Producție
+
+Integrarea automată aplică regulile din Secțiunile 3–7: verifică semnătura RS512 și hash-ul SHA-512 al fiecărui IPN, răspunde cu `{ "errorCode": 0 }` doar după procesare (altfel NETOPIA retrimite), cere IP-ul plătitorului la plățile cu token și nu afișează cheia API. Înainte de trecerea în Producție, verificați:
+
+- ☐ Cheia API și semnătura POS de Producție sunt setate, iar NETOPIA_SANDBOX=false
+- ☐ resolveOrder calculează suma pe server
+- ☐ onPaymentUpdate salvează ntpID-ul (și token-ul) și este idempotentă
+- ☐ notifyUrl este HTTPS public și accesibil din internet
+- ☐ IPN-ul este acceptat doar de la 217.156.103.68 (firewall sau `netopia.isNetopiaIp(ip)`) — rutele generate nu aplică automat această restricție
+- ☐ A fost testată o plată în Sandbox cu un card de test (Secțiunea 8.3), iar IPN-ul a ajuns și a fost procesat
+
+---
+
 ## Glosar de Termeni — NETOPIA API V2
 
 ### A
@@ -807,7 +954,7 @@ Whitelist IP  Listă de adrese IP de la care serverul comerciantului acceptă co
 
 ---
 
-## 10. Versionare Document
+## 11. Versionare Document
 
 Această secțiune înregistrează toate modificările aduse documentului (adăugiri, modificări, ștergeri).
 
@@ -821,5 +968,6 @@ Această secțiune înregistrează toate modificările aduse documentului (adău
 | 2.6 | 28.08.2026 | Marcaru Cezar | Adăugare | Documentarea faptului că punctele de vânzare nu pot fi adăugate în Sandbox și se configurează din consola NETOPIA; adăugarea cheii publice RSA pentru verificarea IPN și precizarea că este aceeași în Live/Producție și Sandbox. |
 | 2.7 | 28.08.2026 | Marcaru Cezar | Adăugare | Adăugare cheie publică RSA pentru verificarea semnăturii JWT/RS512 a notificărilor IPN în Secțiunea 3.4; cheia este comună pentru mediile Live/Producție și Sandbox. |
 | 2.8 | 11.11.2026 | Marcaru Cezar | Modificare | Secțiunea 7.4: precizarea că Money Send nu este disponibil în Sandbox; eliminarea notei privind copierea/distribuirea; corectarea legăturii din Cuprins către Secțiunea 10 — Versionare Document; ordonarea cronologică a tabelului de versiuni. |
+| 2.9 | 11.11.2026 | Marcaru Cezar | Adăugare | Secțiunea 10 nouă — Integrare Automată (SDK, CLI și Agent AI): pachetul netopia, comanda npx netopia init, skill-ul pentru agenți AI, variabile de mediu și verificări înainte de Producție; Versionare Document devine Secțiunea 11. |
 
 ---
