@@ -7,6 +7,6 @@ const source = process.env.DOCS_SOURCE ?? 'API Ghid de Integrare.md';
 export default defineConfig({
   // Relative base so the build works on GitHub Pages under /<repo>/ as well as on a custom domain.
   base: './',
-  plugins: [netopiaDocs({ source })],
+  plugins: [netopiaDocs({ source, repo: 'xkcezar/DocumentatieNTPv2' })],
   build: { target: 'es2022', chunkSizeWarningLimit: 1200 },
 });

@@ -1,6 +1,6 @@
 # NETOPIA API — documentație web
 
-Site de documentație generat din **`API Ghid de Integrare.md`**. Fișierul Markdown este singura sursă de conținut: editezi `.md`-ul (local sau direct pe GitHub), faci push pe `main`, iar GitHub Actions reconstruiește și publică site-ul în ~1 minut.
+Site de documentație generat din **`API Ghid de Integrare.md`**. Fișierul Markdown este singura sursă de conținut: editezi `.md`-ul (local sau direct pe GitHub), faci push pe `main`, iar Cloudflare Pages reconstruiește și publică site-ul în ~1 minut.
 
 ## Ce face
 
@@ -45,13 +45,20 @@ npm run dev       # http://localhost:5173 — se reîncarcă la fiecare salvare 
 npm run build     # generează site-ul static în dist/
 ```
 
-## Publicare pe GitHub Pages (o singură dată)
+## Publicare (Cloudflare Pages + Access)
 
-1. Creează un repository pe GitHub și urcă proiectul pe branch-ul `main`.
-2. În repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. La primul push rulează `.github/workflows/deploy.yml`; URL-ul apare în tab-ul **Actions** și în Settings → Pages.
+Site-ul e publicat de **Cloudflare Pages**, conectat la acest repository: la fiecare push pe `main` Cloudflare face build și publică automat. Accesul e restricționat cu **Cloudflare Access** (login cu cod pe email).
 
-Pe site apar automat „Editează pe GitHub”, „Istoric modificări” și commit-ul din care a fost generat.
+Setări de build în Cloudflare Pages:
+
+| Setare | Valoare |
+| --- | --- |
+| Framework preset | None |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Variabilă de mediu | `NODE_VERSION` = `24` |
+
+Linkurile „Editează pe GitHub” și „Istoric modificări” folosesc repository-ul setat în `vite.config.ts`.
 
 ## Structură
 

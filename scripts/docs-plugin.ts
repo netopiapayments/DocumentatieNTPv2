@@ -28,6 +28,8 @@ const ENDPOINT_RE = /\/(payment\/card\/start|operation\/(?:credit|expire|status)
 export interface DocsOptions {
   /** Path to the Markdown source, relative to the project root. */
   source: string;
+  /** GitHub repository ("owner/name") used for the "Edit on GitHub" / history links. */
+  repo?: string;
 }
 
 export function netopiaDocs(options: DocsOptions): Plugin {
@@ -47,7 +49,7 @@ export function netopiaDocs(options: DocsOptions): Plugin {
         langs: ['json', 'jsonc', 'javascript', 'typescript', 'bash', 'php', 'python', 'html', 'xml', 'http'],
       });
       const raw = fs.readFileSync(file, 'utf8');
-      const data = buildDocs(raw, highlighter, options.source);
+      const data = buildDocs(raw, highlighter, options.source, options.repo ?? '');
       return `export default ${JSON.stringify(data)};`;
     },
     handleHotUpdate(ctx) {
@@ -67,7 +69,7 @@ interface Example { id: number; path: string; title: string; subtitle: string; s
 interface SearchEntry { id: string; title: string; section: string; text: string }
 interface SectionCard { id: string; num: string; title: string; summary: string }
 
-function buildDocs(raw: string, hl: Highlighter, sourceName: string) {
+function buildDocs(raw: string, hl: Highlighter, sourceName: string, repo: string) {
   const src = fixLooseBold(raw.replace(/\r\n?/g, '\n'));
   const { meta, body } = splitPreamble(src);
 
@@ -188,7 +190,7 @@ function buildDocs(raw: string, hl: Highlighter, sourceName: string) {
     });
 
   return {
-    meta: { ...meta, ...gitInfo(sourceName), source: sourceName },
+    meta: { ...meta, ...gitInfo(sourceName, repo), source: sourceName },
     html,
     toc,
     cards,
@@ -404,16 +406,18 @@ function langLabel(lang: string) {
   return map[lang] ?? lang.toUpperCase();
 }
 
-/** Commit info for the "last synced" badge; works locally and in GitHub Actions. */
-function gitInfo(sourceName: string) {
+/** Commit info for the "last synced" badge; works locally, on Cloudflare Pages and in GitHub Actions. */
+function gitInfo(sourceName: string, configuredRepo: string) {
   const run = (cmd: string) => {
     try { return execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return ''; }
   };
   const quoted = JSON.stringify(sourceName);
-  const sha = run(`git log -1 --format=%h -- ${quoted}`);
+  const env = process.env;
+  // Cloudflare Pages may build from a shallow clone; fall back to the commit it reports.
+  const sha = run(`git log -1 --format=%h -- ${quoted}`) || (env.CF_PAGES_COMMIT_SHA ?? env.GITHUB_SHA ?? '').slice(0, 7);
   const date = run(`git log -1 --format=%cI -- ${quoted}`);
-  const repo = process.env.GITHUB_REPOSITORY ?? '';
-  const branch = process.env.GITHUB_REF_NAME ?? 'main';
+  const repo = env.GITHUB_REPOSITORY || configuredRepo;
+  const branch = env.CF_PAGES_BRANCH || env.GITHUB_REF_NAME || 'main';
   const encoded = sourceName.split('/').map(encodeURIComponent).join('/');
   return {
     commit: sha,
