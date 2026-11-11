@@ -21,12 +21,22 @@ function get() {
       engine: createJavaScriptRegexEngine(),
     });
   })();
+  // Don't cache a failure (e.g. a chunk that failed to load) — retry on the next call.
+  instance.catch(() => { instance = undefined; });
   return instance;
 }
 
+const plain = (code: string) => `<pre class="shiki github-dark-default"><code>${escapeHtml(code)}</code></pre>`;
+
+/** Never rejects: if Shiki can't load or can't tokenize, the code is still shown, just without colours. */
 export async function highlight(code: string, lang: string) {
-  const hl = await get();
-  return hl.codeToHtml(code, { lang, theme: 'github-dark-default' });
+  try {
+    const hl = await get();
+    return hl.codeToHtml(code, { lang, theme: 'github-dark-default' });
+  } catch (err) {
+    console.warn('[highlight] fallback to plain text:', err);
+    return plain(code);
+  }
 }
 
 export const escapeHtml = (s: string) =>

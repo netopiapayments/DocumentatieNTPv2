@@ -125,7 +125,10 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     const lang = SNIPPET_LANGS.find((l) => l.id === tab)!;
     const code = snippet(lang.id, baseUrl() + ex.path, parsed.value);
     snippetHost.dataset.code = code;
-    snippetHost.innerHTML = await highlight(code, lang.shiki);
+    // Show the code immediately; colours arrive when the highlighter is ready.
+    snippetHost.innerHTML = `<pre class="shiki github-dark-default"><code>${escapeHtml(code)}</code></pre>`;
+    const html = await highlight(code, lang.shiki);
+    if (snippetHost.dataset.code === code) snippetHost.innerHTML = html;
   }
 
   /* ---------- helpers row ---------- */
