@@ -58,7 +58,7 @@ Fiecare punct este detaliat mai jos cu explicații și trimiteri la secțiunile 
 
 Folosiți această listă de verificare înainte de a scrie cod. Fiecare punct conține un rezumat și o trimitere la secțiunea relevantă pentru detalii complete.
 
-- Acces la Consola Merchant (Sandbox și Producție) — Creați conturi pe ambele medii: [sandbox.netopia-payments.com](https://sandbox.netopia-payments.com) și [admin.netopia-payments.com](https://admin.netopia-payments.com). → Detalii: Secțiunea 2 — Medii de Lucru și Endpoints API
+- Acces la Consola NETOPIA (Sandbox și Producție) — Creați cont [admin.netopia-payments.com](https://admin.netopia-payments.com). → Detalii: Secțiunea 2 — Medii de Lucru și Endpoints API
 - Cheie API creată din Profil → Securitate — Generați chei separate pentru fiecare mediu; se trimite în header-ul Authorization. → Detalii: Secțiunea 3.1 — Cheia API
 - Puncte de vânzare configurate din consola NETOPIA — În Sandbox nu se pot adăuga POS-uri; acestea se creează și se configurează în mediul Live/Producție.
 - Semnătură POS identificată — Admin → Puncte de vânzare → Setări tehnice; se trimite în order.posSignature. → Detalii: Secțiunea 3.2 — Semnătura POS
