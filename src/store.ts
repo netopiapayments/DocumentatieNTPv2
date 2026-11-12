@@ -7,7 +7,7 @@
 
 export type Env = 'sandbox' | 'production';
 
-export interface Credentials { apiKey: string; posSignature: string; posID: string }
+export interface Credentials { apiKey: string; posSignature: string }
 
 export interface LastTx { env: Env; ntpID: string; orderID: string; at: number }
 
@@ -17,7 +17,7 @@ export const BASE_URLS: Record<Env, string> = {
 };
 
 const KEY = 'ntp-docs:v1';
-const empty = (): Credentials => ({ apiKey: '', posSignature: '', posID: '' });
+const empty = (): Credentials => ({ apiKey: '', posSignature: '' });
 
 interface State {
   env: Env;

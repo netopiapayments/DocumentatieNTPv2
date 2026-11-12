@@ -41,7 +41,8 @@ export function applyTemplate(body: string, path: string, { creds, lastTx }: Tem
   }
 
   if (isOperation(path)) {
-    if (creds.posID) out = setString(out, 'posID', creds.posID);
+    // In the operation calls, posID is the POS signature.
+    if (creds.posSignature) out = setString(out, 'posID', creds.posSignature);
     if (lastTx?.ntpID) out = setString(out, 'ntpID', lastTx.ntpID);
     if (lastTx?.orderID) out = setString(out, 'orderID', lastTx.orderID);
   }

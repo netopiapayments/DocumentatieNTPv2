@@ -30,7 +30,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
   const ctxKey = () => {
     const c = store.creds();
     const tx = isOperation(ex.path) ? store.lastTx : null;
-    return [store.env, c.posSignature, c.posID, tx?.ntpID, tx?.orderID].join('|');
+    return [store.env, c.posSignature, tx?.ntpID, tx?.orderID].join('|');
   };
   let lastKey = ctxKey();
   let dirty = false;

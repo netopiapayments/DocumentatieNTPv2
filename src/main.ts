@@ -154,12 +154,7 @@ app.innerHTML = `
       <label class="field">
         <span class="field-label">Semnătură POS</span>
         <input type="text" autocomplete="off" spellcheck="false" data-field="posSignature" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" />
-        <small>Admin → Puncte de vânzare → Setări tehnice. Completează <code>order.posSignature</code>.</small>
-      </label>
-      <label class="field">
-        <span class="field-label">POS ID <em>opțional</em></span>
-        <input type="text" autocomplete="off" spellcheck="false" data-field="posID" placeholder="ex. 12345" />
-        <small>Folosit de <code>/operation/status</code> și <code>/operation/expire</code>.</small>
+        <small>Admin → Puncte de vânzare → Setări tehnice. Completează <code>order.posSignature</code> la plăți și <code>posID</code> la Status / Expirare.</small>
       </label>
       <label class="toggle">
         <input type="checkbox" data-remember />
