@@ -2,9 +2,9 @@
 
 # NETOPIA Financial Services S.A. — API Ghid de Integrare
 
-> Versiune document: 2.9
+> Versiune document: 2.10
 > 
-> Ultima actualizare: 11 Noiembrie 2026
+> Ultima actualizare: 12 Noiembrie 2026
 > 
 > Autori: @Cezar Marcaru , @Andreea Bulai
 > 
@@ -119,7 +119,7 @@ Authorization: YOUR_API_KEY
 
 ### 3.2 Semnătura POS (POS Signature)
 
-Se găsește în Admin → Puncte de vânzare → Setări tehnice și se trimite în câmpul order.posSignature.
+Se găsește în Admin → Puncte de vânzare → Setări tehnice și se trimite în câmpul order.posSignature. Aceeași valoare se trimite în câmpul posID la operațiunile de Expirare Link și Interogare Status (Secțiunea 6).
 
 ### 3.3 Whitelisting IP pentru IPN
 
@@ -278,16 +278,20 @@ NETOPIA va trimite un request POST la config.notifyUrl de fiecare dată când st
 **Endpoint: POST /operation/expire**
 
 ```json
-{ "posID": "XXXX", "ntpID": "1309088", "orderID": "1234" }
+{ "posID": "XXXX-XXXX-XXXX-XXXX-XXXX", "ntpID": "1309088", "orderID": "1234" }
 ```
+
+> *Notă: `posID` este semnătura POS — aceeași valoare trimisă în `order.posSignature` la inițierea plății.*
 
 ### 6.3 Interogare Status
 
 **Endpoint: POST /operation/status**
 
 ```json
-{ "posID": "XXXX", "ntpID": "1309088", "orderID": "1234" }
+{ "posID": "XXXX-XXXX-XXXX-XXXX-XXXX", "ntpID": "1309088", "orderID": "1234" }
 ```
+
+> *Notă: `posID` este semnătura POS — aceeași valoare trimisă în `order.posSignature` la inițierea plății.*
 
 > *Notă: Acest apel este util pentru a verifica starea finală a unei tranzacții în cazul în care IPN-ul nu a putut fi procesat din motive excepționale.*
 
@@ -969,5 +973,6 @@ Această secțiune înregistrează toate modificările aduse documentului (adău
 | 2.7 | 28.08.2026 | Marcaru Cezar | Adăugare | Adăugare cheie publică RSA pentru verificarea semnăturii JWT/RS512 a notificărilor IPN în Secțiunea 3.4; cheia este comună pentru mediile Live/Producție și Sandbox. |
 | 2.8 | 11.11.2026 | Marcaru Cezar | Modificare | Secțiunea 7.4: precizarea că Money Send nu este disponibil în Sandbox; eliminarea notei privind copierea/distribuirea; corectarea legăturii din Cuprins către Secțiunea 10 — Versionare Document; ordonarea cronologică a tabelului de versiuni. |
 | 2.9 | 11.11.2026 | Marcaru Cezar | Adăugare | Secțiunea 10 nouă — Integrare Automată (SDK, CLI și Agent AI): pachetul netopia, comanda npx netopia init, skill-ul pentru agenți AI, variabile de mediu și verificări înainte de Producție; Versionare Document devine Secțiunea 11. |
+| 2.10 | 12.11.2026 | Marcaru Cezar | Modificare | Precizarea că posID din Secțiunile 6.2 (Expirare Link) și 6.3 (Interogare Status) este semnătura POS (aceeași valoare ca order.posSignature); actualizarea exemplelor și a Secțiunii 3.2. |
 
 ---
