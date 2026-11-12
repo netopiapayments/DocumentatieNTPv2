@@ -41,7 +41,7 @@ app.innerHTML = `
     </button>
     <div class="top-actions">
       <span class="env-badge" title="Exemplele din documentație rulează doar în Sandbox"><i aria-hidden="true"></i>Sandbox</span>
-      <button class="creds-btn" data-creds><span class="status-dot"></span><span class="creds-label">Credențiale</span></button>
+      <button class="creds-btn" data-creds aria-label="Credențiale">${icon('key', 15)}<span class="status-dot"></span><span class="creds-label">Credențiale</span></button>
       <button class="icon-btn" data-theme-toggle aria-label="Schimbă tema">${icon('sun', 17)}${icon('moon', 17)}</button>
       ${meta.repo ? `<a class="icon-btn hide-mobile" href="https://github.com/${meta.repo}" target="_blank" rel="noopener" aria-label="GitHub">${icon('github', 17)}</a>` : ''}
     </div>
@@ -72,14 +72,11 @@ app.innerHTML = `
 
     <main class="content" id="top">
       <section class="hero">
-        <div class="hero-glow" aria-hidden="true"></div>
-        <div class="hero-grid" aria-hidden="true"></div>
-        <div class="eyebrow"><span class="pulse"></span>${escapeHtml(meta.company || 'NETOPIA Payments')} · API v2</div>
         <h1 class="hero-title">${escapeHtml(meta.title)}</h1>
         <p class="hero-lead" data-lead>Tot ce ai nevoie pentru a integra plățile cu cardul NETOPIA — de la prima plată până la refund, plăți recurente și Money Send.</p>
         <div class="hero-cta">
-          <a class="btn btn-primary" href="#${firstNumbered?.id ?? ''}">Începe integrarea ${icon('arrow', 16)}</a>
-          <button class="btn btn-ghost" data-creds>${icon('key', 16)} Configurează credențialele</button>
+          <a class="btn btn-primary" href="#${firstNumbered?.id ?? ''}">Începe integrarea</a>
+          <button class="btn btn-ghost" data-creds>Configurează credențialele</button>
         </div>
         <dl class="hero-meta">
           ${meta.version ? `<div><dt>Versiune</dt><dd>${escapeHtml(meta.version)}</dd></div>` : ''}
@@ -90,14 +87,14 @@ app.innerHTML = `
       </section>
 
       <section class="overview" aria-label="Secțiuni">
+        <div class="ov-head" aria-hidden="true"><span>#</span><span>Secțiune</span><span>Conținut</span></div>
         ${cards
           .filter((c) => c.num)
           .map(
-            (c) => `<a class="ov-card" href="#${c.id}">
+            (c) => `<a class="ov-row" href="#${c.id}">
               <span class="ov-num">${c.num.padStart(2, '0')}</span>
               <span class="ov-title">${escapeHtml(c.title)}</span>
-              <span class="ov-sum">${escapeHtml(c.summary.length > 120 ? c.summary.slice(0, 118).trimEnd() + '…' : c.summary)}</span>
-              <span class="ov-arrow">${icon('arrow', 15)}</span>
+              <span class="ov-sum">${escapeHtml(c.summary)}</span>
             </a>`,
           )
           .join('')}
@@ -209,6 +206,7 @@ function renderEnv() {
   const btn = $('[data-creds].creds-btn');
   btn.dataset.state = configured ? 'ok' : 'missing';
   $('.creds-label', btn).textContent = configured ? 'Conectat' : 'Credențiale';
+  btn.setAttribute('aria-label', configured ? 'Credențiale: conectat' : 'Credențiale: lipsesc');
 
   const tx = store.lastTx;
   $('[data-session]').innerHTML = `

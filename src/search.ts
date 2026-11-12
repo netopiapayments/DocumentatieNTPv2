@@ -1,7 +1,6 @@
 /** ⌘K command palette over every heading and its text in the guide. */
 import type { SearchEntry } from 'virtual:netopia-docs';
 import { escapeHtml } from './highlight';
-import { icon } from './icons';
 
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
@@ -73,7 +72,6 @@ export function createSearch(entries: SearchEntry[], hooks: Hooks) {
       ? results
           .map(
             (r, i) => `<a class="result${i === selected ? ' selected' : ''}" href="#${r.id}" data-i="${i}">
-              <span class="result-icon">${icon(r.section ? 'arrow' : 'bolt', 14)}</span>
               <span class="result-main">
                 ${r.section ? `<span class="result-crumb">${escapeHtml(r.section)}</span>` : ''}
                 <span class="result-title">${mark(r.title, terms)}</span>

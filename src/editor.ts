@@ -20,15 +20,15 @@ const style = HighlightStyle.define([
 const theme = EditorView.theme(
   {
     '&': { color: '#e6edf3', backgroundColor: 'transparent', fontSize: '13px' },
-    '.cm-content': { fontFamily: 'var(--font-mono)', padding: '14px 0', caretColor: 'var(--accent-bright)' },
+    '.cm-content': { fontFamily: 'var(--font-mono)', padding: '14px 0', caretColor: '#e4e4e7' },
     '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.65' },
     '.cm-gutters': { backgroundColor: 'transparent', color: '#4d5560', border: 'none', paddingLeft: '6px' },
     '.cm-lineNumbers .cm-gutterElement': { padding: '0 10px 0 6px', minWidth: '28px' },
     '.cm-activeLine': { backgroundColor: 'rgba(255,255,255,0.035)' },
     '.cm-activeLineGutter': { backgroundColor: 'transparent', color: '#8b949e' },
     '&.cm-focused': { outline: 'none' },
-    '.cm-cursor': { borderLeftColor: 'var(--accent-bright)', borderLeftWidth: '2px' },
-    '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': { backgroundColor: 'rgba(56,189,148,0.22) !important' },
+    '.cm-cursor': { borderLeftColor: '#e4e4e7', borderLeftWidth: '1px' },
+    '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': { backgroundColor: 'rgba(124,140,248,0.25) !important' },
     '.cm-matchingBracket': { backgroundColor: 'rgba(255,255,255,0.08)', outline: '1px solid rgba(255,255,255,0.15)' },
   },
   { dark: true },
