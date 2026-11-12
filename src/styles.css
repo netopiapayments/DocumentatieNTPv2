@@ -220,27 +220,7 @@ kbd {
 }
 
 .brand { display: flex; align-items: center; gap: 10px; min-width: 232px; }
-.logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--brand-gradient);
-  display: grid;
-  grid-auto-flow: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 14px -4px rgba(68, 40, 168, 0.55);
-}
-.logo i {
-  width: 3px;
-  height: 14px;
-  border-radius: 2px;
-  background: #fff;
-  transform: skewX(-18deg);
-}
-.logo i:nth-child(3) { height: 9px; align-self: end; margin-bottom: 7px; background: rgba(255, 255, 255, 0.7); }
-.brand-name { font-weight: 650; letter-spacing: 0.04em; font-size: 14px; }
+.wordmark { display: block; height: 30px; width: auto; color: var(--text); flex: none; }
 .brand-tag {
   font-size: 12px;
   color: var(--muted);
@@ -1554,7 +1534,8 @@ html[data-env='production'] .rail { top: calc(var(--topbar) + 32px); height: cal
   .pg-foot { flex-direction: column; align-items: stretch; }
   .run-btn { justify-content: center; }
   .pg-head { flex-wrap: wrap; }
-  .brand-name { display: none; }
+  .wordmark { height: 22px; }
+  .brand { flex: none; }
   .top-actions { gap: 6px; }
   .drawer { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 88vh; transform: translateY(calc(100% + 20px)); }
   .palette { padding-top: 8vh; }

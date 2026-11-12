@@ -1,4 +1,5 @@
 import './styles.css';
+import logoSvg from './assets/netopia-logo.svg?raw';
 import docs from 'virtual:netopia-docs';
 import { store, type Env } from './store';
 import { icon } from './icons';
@@ -31,9 +32,8 @@ app.innerHTML = `
   <div class="progress" aria-hidden="true"><span></span></div>
   <header class="topbar">
     <button class="icon-btn only-mobile" data-menu aria-label="Meniu">${icon('menu', 18)}</button>
-    <a class="brand" href="#top" aria-label="Început">
-      <span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="brand-name">NETOPIA</span>
+    <a class="brand" href="#top" aria-label="NETOPIA Payments — API Docs, început">
+      ${logoSvg}
       <span class="brand-tag">API Docs</span>
     </a>
     <button class="search-trigger" data-search>
