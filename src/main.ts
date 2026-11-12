@@ -528,7 +528,7 @@ function onScroll() {
   if (activeLink && innerWidth > 960) {
     const sb = $('.sidebar');
     const r = activeLink.getBoundingClientRect();
-    if (r.top < 80 || r.bottom > innerHeight - 60) sb.scrollTo({ top: activeLink.offsetTop - sb.clientHeight / 3, behavior: 'smooth' });
+    if (r.top < 80 || r.bottom > innerHeight - 60) sb.scrollTo({ top: activeLink.offsetTop - sb.clientHeight / 3 });
   }
 }
 
@@ -567,5 +567,18 @@ if (location.hash) {
   requestAnimationFrame(jump);
   document.fonts?.ready.then(jump);
 }
-// Smooth scrolling only after the initial position is settled.
-setTimeout(() => document.documentElement.classList.add('smooth'), 400);
+// Navigation jumps instantly (long animated scrolls are disorienting on a page this long);
+// a short highlight on the target heading shows where you landed.
+function flash(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+  setTimeout(() => el.classList.remove('flash'), 1300);
+}
+document.addEventListener('click', (e) => {
+  const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
+  const id = a ? decodeURIComponent(a.getAttribute('href')!.slice(1)) : '';
+  if (id) requestAnimationFrame(() => flash(id));
+});

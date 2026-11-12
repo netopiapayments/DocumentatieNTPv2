@@ -92,9 +92,11 @@ export function createSearch(entries: SearchEntry[], hooks: Hooks) {
     const el = document.getElementById(r.id);
     if (el) {
       history.pushState(null, '', '#' + r.id);
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.scrollIntoView({ block: 'start' });
+      el.classList.remove('flash');
+      void el.offsetWidth;
       el.classList.add('flash');
-      setTimeout(() => el.classList.remove('flash'), 1600);
+      setTimeout(() => el.classList.remove('flash'), 1300);
     }
   }
 
