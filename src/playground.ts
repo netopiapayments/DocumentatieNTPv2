@@ -1,6 +1,6 @@
 /** Interactive "try it" console mounted on every runnable example from the guide. */
 import type { Example } from 'virtual:netopia-docs';
-import { store } from './store';
+import { store, SANDBOX_URL, PRODUCTION_URL } from './store';
 import { createEditor, type JsonEditor } from './editor';
 import { highlight, escapeHtml } from './highlight';
 import {
@@ -30,7 +30,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
   const ctxKey = () => {
     const c = store.creds();
     const tx = isOperation(ex.path) ? store.lastTx : null;
-    return [store.env, c.posSignature, tx?.ntpID, tx?.orderID].join('|');
+    return [c.posSignature, tx?.ntpID, tx?.orderID].join('|');
   };
   let lastKey = ctxKey();
   let dirty = false;
@@ -82,9 +82,10 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
   const envPill = $('[data-env-pill]');
   const urlBase = $('.pg-url-base');
 
-  /** True when this example can't run in the selected environment (e.g. Money Send in Sandbox). */
-  const unavailable = () => store.env === 'sandbox' && !ex.sandbox;
-  const baseUrl = () => store.baseUrl(unavailable() ? 'production' : store.env);
+  /** Features that don't exist in Sandbox (e.g. Money Send) can't be run from the docs at all. */
+  const unavailable = () => !ex.sandbox;
+  /** Code samples for such features show the Production URL; requests are only ever sent to Sandbox. */
+  const baseUrl = () => (unavailable() ? PRODUCTION_URL : SANDBOX_URL);
 
   const template = () => applyTemplate(ex.body, ex.path, { creds: store.creds(), lastTx: store.lastTx });
 
@@ -137,9 +138,9 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     const parts: string[] = [];
 
     if (unavailable()) {
-      parts.push(`<span class="hint hint-warn">${icon('alert')} Indisponibil în Sandbox — această funcționalitate poate fi folosită doar în Producție.</span>`);
+      parts.push(`<span class="hint hint-warn">${icon('alert')} Indisponibil în Sandbox — nu poate fi rulat din documentație. Exemplele de cod (cURL, Node.js, PHP, Python) arată apelul în Producție.</span>`);
     } else if (!store.isConfigured()) {
-      parts.push(`<button class="hint hint-warn" data-open-creds>${icon('key')} Adaugă cheia API pentru ${store.env === 'sandbox' ? 'Sandbox' : 'Producție'} ca să poți trimite request-ul</button>`);
+      parts.push(`<button class="hint hint-warn" data-open-creds>${icon('key')} Adaugă cheia API de Sandbox ca să poți trimite request-ul</button>`);
     }
 
     const placeholders = findPlaceholders(text);
@@ -161,7 +162,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
       );
     }
 
-    if (/"account"\s*:/.test(text) && refs.testCards.length && store.env === 'sandbox') {
+    if (/"account"\s*:/.test(text) && refs.testCards.length) {
       parts.push(
         `<div class="cards-row"><span class="cards-label">${icon('card')} Card de test</span>` +
           refs.testCards
@@ -204,17 +205,14 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
 
   runBtn.addEventListener('click', () => run());
 
-  /* ---------- environment sync ---------- */
-  function syncEnv() {
-    const prod = store.env === 'production';
-    envPill.textContent = prod ? 'Producție' : 'Sandbox';
-    envPill.dataset.env = store.env;
-    urlBase.textContent = baseUrl();
-    root.classList.toggle('is-unavailable', unavailable());
-    runBtn.disabled = unavailable();
-    runBtn.querySelector('.run-label')!.textContent = unavailable() ? 'Indisponibil în Sandbox' : 'Trimite request';
-    envPill.textContent = unavailable() ? 'Doar Producție' : envPill.textContent;
-    root.dataset.env = store.env;
+  /* ---------- state sync ---------- */
+  envPill.textContent = unavailable() ? 'Indisponibil în Sandbox' : 'Sandbox';
+  urlBase.textContent = baseUrl();
+  root.classList.toggle('is-unavailable', unavailable());
+  runBtn.disabled = unavailable();
+  runBtn.querySelector('.run-label')!.textContent = unavailable() ? 'Indisponibil în Sandbox' : 'Trimite request';
+
+  function syncState() {
     const key = ctxKey();
     if (key !== lastKey) {
       lastKey = key;
@@ -223,14 +221,13 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     renderHelpers();
     if (tab !== 'json') renderSnippet();
   }
-  store.subscribe(syncEnv);
-  syncEnv();
+  store.subscribe(syncState);
+  syncState();
 
   /* ---------- run ---------- */
-  let armedTimer = 0;
   async function run() {
     if (unavailable()) {
-      ui.toast('Indisponibil în Sandbox — comută pe Producție', 'info');
+      ui.toast('Indisponibil în Sandbox — nu poate fi rulat din documentație', 'info');
       return;
     }
     if (!store.isConfigured()) {
@@ -238,22 +235,14 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
       ui.toast('Adaugă mai întâi cheia API', 'info');
       return;
     }
-    if (store.env === 'production' && !runBtn.dataset.armed) {
-      runBtn.dataset.armed = '1';
-      runBtn.querySelector('.run-label')!.textContent = 'Confirmă — tranzacție reală';
-      clearTimeout(armedTimer);
-      armedTimer = window.setTimeout(disarm, 4000);
-      return;
-    }
-    disarm();
-
     const parsed = parseBody(editor.get());
     if (!parsed.ok) {
       showResponse(`<div class="pg-error">${icon('alert')} JSON invalid — ${escapeHtml(parsed.error)}</div>`);
       return;
     }
 
-    const url = store.baseUrl() + ex.path;
+    // Requests go to the Sandbox only — there is no way to call Production from the docs.
+    const url = SANDBOX_URL + ex.path;
     runBtn.disabled = true;
     root.classList.add('is-running');
     const started = performance.now();
@@ -280,11 +269,6 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     }
   }
 
-  function disarm() {
-    delete runBtn.dataset.armed;
-    runBtn.querySelector('.run-label')!.textContent = 'Trimite request';
-  }
-
   async function renderResult(res: Response, text: string, data: any, ms: number, requestBody: any) {
     const ok = res.ok;
     const kind = res.status < 300 ? 'ok' : res.status < 500 ? 'warn' : 'err';
@@ -306,7 +290,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     const ntpID = data?.payment?.ntpID;
     if (ntpID && isPayment(ex.path)) {
       const orderID = requestBody?.order?.orderID ?? requestBody?.order?.id ?? '';
-      store.setLastTx({ env: store.env, ntpID: String(ntpID), orderID: String(orderID), at: Date.now() });
+      store.setLastTx({ ntpID: String(ntpID), orderID: String(orderID), at: Date.now() });
       insights.push(`<span class="insight insight-ok">${icon('check')} ntpID <b>${escapeHtml(String(ntpID))}</b> salvat pentru Refund / Status / Expirare</span>`);
     }
 

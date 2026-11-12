@@ -1,7 +1,7 @@
 import './styles.css';
 import logoSvg from './assets/netopia-logo.svg?raw';
 import docs from 'virtual:netopia-docs';
-import { store, type Env } from './store';
+import { store } from './store';
 import { icon } from './icons';
 import { escapeHtml } from './highlight';
 import { mountPlayground, copy, type Refs } from './playground';
@@ -40,17 +40,12 @@ app.innerHTML = `
       ${icon('search', 15)}<span>Caută în documentație…</span><kbd>${isMac ? '⌘' : 'Ctrl'} K</kbd>
     </button>
     <div class="top-actions">
-      <div class="env-switch" role="radiogroup" aria-label="Mediu">
-        <span class="env-thumb" aria-hidden="true"></span>
-        <button role="radio" data-env="sandbox">Sandbox</button>
-        <button role="radio" data-env="production">Producție</button>
-      </div>
+      <span class="env-badge" title="Exemplele din documentație rulează doar în Sandbox"><i aria-hidden="true"></i>Sandbox</span>
       <button class="creds-btn" data-creds><span class="status-dot"></span><span class="creds-label">Credențiale</span></button>
       <button class="icon-btn" data-theme-toggle aria-label="Schimbă tema">${icon('sun', 17)}${icon('moon', 17)}</button>
       ${meta.repo ? `<a class="icon-btn hide-mobile" href="https://github.com/${meta.repo}" target="_blank" rel="noopener" aria-label="GitHub">${icon('github', 17)}</a>` : ''}
     </div>
   </header>
-  <div class="prod-banner" hidden>${icon('alert', 14)}<span>Mod <b>Producție</b> — request-urile trimise din documentație creează tranzacții reale.</span></div>
 
   <div class="layout">
     <aside class="sidebar" aria-label="Navigare">
@@ -134,22 +129,18 @@ app.innerHTML = `
     <header class="drawer-head">
       <div>
         <h2 id="drawer-title">Credențiale API</h2>
-        <p>Folosite pentru a rula exemplele direct din documentație.</p>
+        <p>Pentru mediul <b>Sandbox</b> — exemplele din documentație rulează doar în Sandbox.</p>
       </div>
       <button class="icon-btn" data-drawer-close aria-label="Închide">${icon('close', 18)}</button>
     </header>
     <div class="drawer-body">
-      <div class="seg" role="tablist" data-cred-env>
-        <button role="tab" data-cenv="sandbox">Sandbox</button>
-        <button role="tab" data-cenv="production">Producție</button>
-      </div>
       <label class="field">
-        <span class="field-label">Cheie API <em>obligatoriu</em></span>
+        <span class="field-label">Cheie API Sandbox <em>obligatoriu</em></span>
         <span class="input-wrap">
           <input type="password" autocomplete="off" spellcheck="false" data-field="apiKey" placeholder="Lipește cheia API" />
           <button type="button" class="input-btn" data-reveal aria-label="Arată cheia">${icon('eye', 16)}</button>
         </span>
-        <small>Profil → Securitate → Cheie API. Se trimite în header-ul <code>Authorization</code>.</small>
+        <small>Profil → Securitate → Cheie API (cheia generată pentru Sandbox). Se trimite în header-ul <code>Authorization</code>. Nu folosi cheia de Producție.</small>
       </label>
       <label class="field">
         <span class="field-label">Semnătură POS</span>
@@ -213,15 +204,7 @@ $('[data-theme-toggle]').addEventListener('click', () => {
 /* ------------------------------------------------------------------ */
 /* Environment + credentials                                           */
 
-let editingEnv: Env = store.env;
-
 function renderEnv() {
-  const env = store.env;
-  $$('[data-env]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.env === env)));
-  $('.env-switch').dataset.active = env;
-  document.documentElement.dataset.env = env;
-  $('.prod-banner').hidden = env !== 'production';
-
   const configured = store.isConfigured();
   const btn = $('[data-creds].creds-btn');
   btn.dataset.state = configured ? 'ok' : 'missing';
@@ -229,7 +212,7 @@ function renderEnv() {
 
   const tx = store.lastTx;
   $('[data-session]').innerHTML = `
-    <div class="session-row"><span>Mediu</span><b class="env-name" data-env="${env}">${env === 'sandbox' ? 'Sandbox' : 'Producție'}</b></div>
+    <div class="session-row"><span>Mediu</span><b class="env-name">Sandbox</b></div>
     <div class="session-row"><span>Cheie API</span><b class="${configured ? 'ok' : 'missing'}">${configured ? 'Setată' : 'Lipsește'}</b></div>
     <div class="session-row"><span>Semnătură POS</span><b class="${store.creds().posSignature ? 'ok' : 'missing'}">${store.creds().posSignature ? 'Setată' : 'Lipsește'}</b></div>
     ${tx ? `<div class="session-row"><span>Ultimul ntpID</span><code>${escapeHtml(tx.ntpID)}</code></div>` : ''}
@@ -237,14 +220,12 @@ function renderEnv() {
 }
 
 function fillDrawer() {
-  const c = store.creds(editingEnv);
-  $$('[data-cenv]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.cenv === editingEnv)));
+  const c = store.creds();
   $$<HTMLInputElement>('[data-field]').forEach((input) => { input.value = c[input.dataset.field as keyof typeof c]; });
   $<HTMLInputElement>('[data-remember]').checked = store.remember;
 }
 
 function openDrawer() {
-  editingEnv = store.env;
   fillDrawer();
   $('.drawer').hidden = false;
   $('.drawer-backdrop').hidden = false;
@@ -261,19 +242,10 @@ document.addEventListener('click', (e) => {
   const t = e.target as HTMLElement;
   if (t.closest('[data-creds]')) openDrawer();
   if (t.closest('[data-drawer-close]')) closeDrawer();
-  const envBtn = t.closest<HTMLElement>('[data-env]');
-  if (envBtn && envBtn.closest('.env-switch')) {
-    const env = envBtn.dataset.env as Env;
-    if (env !== store.env) {
-      store.setEnv(env);
-      toast(env === 'production' ? 'Mod Producție activat — tranzacții reale' : 'Mod Sandbox activat', env === 'production' ? 'error' : 'info');
-    }
-  }
 });
 
-$$('[data-cenv]').forEach((b) => b.addEventListener('click', () => { editingEnv = b.dataset.cenv as Env; fillDrawer(); }));
 $$<HTMLInputElement>('[data-field]').forEach((input) =>
-  input.addEventListener('input', () => store.setCreds(editingEnv, { [input.dataset.field!]: input.value.trim() })),
+  input.addEventListener('input', () => store.setCreds({ [input.dataset.field!]: input.value.trim() })),
 );
 $<HTMLInputElement>('[data-remember]').addEventListener('change', (e) => store.setRemember((e.target as HTMLInputElement).checked));
 $('[data-reveal]').addEventListener('click', () => {

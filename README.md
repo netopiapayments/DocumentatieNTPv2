@@ -4,12 +4,12 @@ Site de documentație generat din **`API Ghid de Integrare.md`**. Fișierul Mark
 
 ## Ce face
 
-- **Exemple rulabile din browser.** Fiecare request JSON din ghid devine un playground editabil care trimite request-ul real către NETOPIA (Sandbox sau Producție). Request-urile pleacă **direct din browser** — API-ul NETOPIA permite CORS — deci nu există niciun server intermediar.
-- **Credențiale locale.** Cheia API, semnătura POS și POS ID se setează din „Credențiale”, separat pentru Sandbox și Producție. Se păstrează în `sessionStorage` (sau `localStorage`, dacă bifezi „Ține minte”) și se trimit doar către NETOPIA.
+- **Exemple rulabile din browser.** Fiecare request JSON din ghid devine un playground editabil care trimite request-ul real către **NETOPIA Sandbox** — documentația nu poate apela Producția. Request-urile pleacă **direct din browser** — API-ul NETOPIA permite CORS — deci nu există niciun server intermediar.
+- **Credențiale locale.** Cheia API de Sandbox și semnătura POS (folosită și ca `posID` la Status / Expirare) se setează din „Credențiale”. Se păstrează în `sessionStorage` (sau `localStorage`, dacă bifezi „Ține minte”) și se trimit doar către NETOPIA.
 - **Completare automată.** `posSignature`, un `orderID` unic și `dateTime` curent se completează singure; după o plată reușită, `ntpID`/`orderID` sunt preluate automat în Refund / Status / Expirare.
 - **Cod gata de copiat** în cURL, Node.js, PHP și Python, generat din body-ul curent.
 - **Răspunsuri interpretate**: statusul plății și codurile de eroare sunt explicate pe baza tabelelor din ghid; butoane pentru `paymentURL` și pentru 3-D Secure (`customerAction`).
-- Căutare ⌘K, temă light/dark, checklist interactiv, carduri de test cu un click (doar în Sandbox), confirmare dublă în Producție.
+- Căutare ⌘K, temă light/dark, checklist interactiv, carduri de test cu un click. Funcționalitățile marcate în ghid ca indisponibile în Sandbox (ex. Money Send) nu pot fi rulate; exemplele lor de cod arată apelul în Producție.
 
 ## Cum editezi conținutul
 
@@ -35,7 +35,7 @@ Dacă detecția automată greșește, pune un comentariu HTML **imediat înainte
 <!-- try: off -->                 nu face blocul rulabil
 ```
 
-Endpoint-urile recunoscute: `/payment/card/start`, `/operation/credit`, `/operation/expire`, `/operation/status`, `/disbursement/card/auth`. URL-urile de bază pentru Sandbox/Producție sunt în `src/store.ts`.
+Endpoint-urile recunoscute: `/payment/card/start`, `/operation/credit`, `/operation/expire`, `/operation/status`, `/disbursement/card/auth`. URL-ul de Sandbox (singurul apelat) și URL-ul de Producție (folosit doar în exemplele de cod) sunt în `src/store.ts`.
 
 ## Rulare locală
 
