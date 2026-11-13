@@ -43,18 +43,15 @@
 
 ### Checklist — Verificare Rapidă
 
-Folosiți această listă de verificare înainte de a scrie cod. Fiecare punct conține un rezumat și o trimitere la secțiunea relevantă pentru detalii complete.
+Ce trebuie să aveți pregătit înainte de a începe integrarea. Fiecare punct conține un rezumat și o trimitere la secțiunea relevantă pentru detalii complete.
 
 - ☐ Acces la Consola NETOPIA (Sandbox și Producție) — Creați cont pe [admin.netopia-payments.com](https://admin.netopia-payments.com). → Detalii: Secțiunea 2 — Medii de Lucru și Endpoints API
 - ☐ Cheie API creată din Profil → Securitate — Generați chei separate pentru fiecare mediu; se trimite în header-ul Authorization. → Detalii: Secțiunea 3.1 — Cheia API
 - ☐ Puncte de vânzare configurate din consola NETOPIA — În Sandbox nu se pot adăuga POS-uri; acestea se creează și se configurează în mediul Live/Producție.
 - ☐ Semnătură POS identificată — Admin → Puncte de vânzare → Setări tehnice; se trimite în order.posSignature. → Detalii: Secțiunea 3.2 — Semnătura POS
-- ☐ IP-uri NETOPIA în whitelist — acceptați IPN doar de la 217.156.103.68 (Producție) și 217.156.103.69 (Sandbox). → Detalii: Secțiunea 3.3 — Whitelisting IP pentru IPN
-- ☐ URL de notificare (notifyUrl) — cerințe obligatorii: HTTPS public, răspunde cu { "errorCode": 0 } și HTTP 200 OK; NETOPIA retrimite dacă nu răspunde corect. → Detalii: Secțiunea 5.2 — Gestionarea Notificării IPN
-- ☐ Plan de verificare JWT pentru IPN — pas cu pas: salvați body-ul raw, extrageți JWT din Authorization, decodificați sub, calculați SHA-512 pe body, comparați cu sub, verificați semnătura RS512 cu cheia publică. → Detalii: Secțiunea 3.4 — Securitatea IPN: Verificarea JWT
-- ☐ Gestionare redirect pe paymentURL — redirecționați browser-ul la payment.paymentURL; gestionați redirectUrl/cancelUrl; nu stocați paymentURL pentru mai târziu. → Detalii: Secțiunea 4 și Secțiunea 5.1
-- ☐ Stocare ntpID și token la primul IPN — la status 3 salvați payment.ntpID (necesar pentru refund/status/expire) și, dacă ați trimis clientID, salvați payment.instrument.token pentru plăți recurente. → Detalii: Secțiunea 5.2, Secțiunea 6 și Secțiunea 7.1
-- ☐ Conformitate PCI — nu logați date sensibile; folosiți TLS 1.2+; pentru integrare directă card este necesară certificare PCI-DSS. → Detalii: Secțiunea 9 — Integrare Directă Card
+- ☐ IP-urile NETOPIA permise în firewall — 217.156.103.68 (Producție) și 217.156.103.69 (Sandbox), de la care vin notificările IPN. → Detalii: Secțiunea 3.3 — Whitelisting IP pentru IPN
+- ☐ Domeniu public pe HTTPS pentru notifyUrl și redirectUrl — NETOPIA trebuie să poată trimite notificările IPN către serverul dumneavoastră. → Detalii: Secțiunea 5.2 — Gestionarea Notificării IPN
+- ☐ Server cu TLS 1.2+ — cerință PCI DSS. → Detalii: Glosar — PCI DSS
 
 ---
 
