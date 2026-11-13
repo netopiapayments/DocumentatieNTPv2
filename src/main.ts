@@ -370,7 +370,7 @@ for (const wrap of $$('.doc .table-wrap')) {
       .map((c) => ({
         v: c[0].textContent!.trim(),
         date: c[idx('data')]?.textContent!.trim() ?? '',
-        author: c[idx('autor')]?.textContent!.trim() ?? '',
+        author: idx('autor') >= 0 ? c[idx('autor')].textContent!.trim() : '',
         type: c[idx('tip')]?.textContent!.trim() ?? '',
         desc: c[idx('descriere')]?.innerHTML ?? '',
       }))
@@ -381,7 +381,7 @@ for (const wrap of $$('.doc .table-wrap')) {
       .map(
         (it, i) => `<li${i === 0 ? ' class="latest"' : ''}>
           <div class="cl-side"><span class="cl-v">v${escapeHtml(it.v)}</span><span class="cl-date">${escapeHtml(it.date)}</span></div>
-          <div class="cl-main"><div class="cl-tags">${it.type ? `<span class="cl-type">${escapeHtml(it.type)}</span>` : ''}${i === 0 ? '<span class="cl-latest">Curentă</span>' : ''}<span class="cl-author">${escapeHtml(it.author)}</span></div><p>${it.desc}</p></div>
+          <div class="cl-main"><div class="cl-tags">${it.type ? `<span class="cl-type">${escapeHtml(it.type)}</span>` : ''}${i === 0 ? '<span class="cl-latest">Curentă</span>' : ''}${it.author ? `<span class="cl-author">${escapeHtml(it.author)}</span>` : ''}</div><p>${it.desc}</p></div>
         </li>`,
       )
       .join('');
