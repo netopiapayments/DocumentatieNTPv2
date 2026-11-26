@@ -1,9 +1,3 @@
-/**
- * Turns a documentation example into a ready-to-send request, and generates code samples.
- *
- * Example bodies are edited as text (so comments from the guide survive); substitutions are
- * key-based regex replacements, and parsing uses JSON5 so `//` and `/* *\/` comments are tolerated.
- */
 import JSON5 from 'json5';
 import type { Credentials, LastTx } from './store';
 
@@ -29,7 +23,6 @@ export const newOrderId = () => `DOCS-${Date.now().toString(36).toUpperCase()}-$
 
 export interface TemplateContext { creds: Credentials; lastTx: LastTx | null }
 
-/** Fills an example body with the user's credentials, a fresh order id/date, or the last transaction. */
 export function applyTemplate(body: string, path: string, { creds, lastTx }: TemplateContext) {
   let out = body;
   if (creds.posSignature) out = setString(out, 'posSignature', creds.posSignature);
@@ -41,7 +34,6 @@ export function applyTemplate(body: string, path: string, { creds, lastTx }: Tem
   }
 
   if (isOperation(path)) {
-    // In the operation calls, posID is the POS signature.
     if (creds.posSignature) out = setString(out, 'posID', creds.posSignature);
     if (lastTx?.ntpID) out = setString(out, 'ntpID', lastTx.ntpID);
     if (lastTx?.orderID) out = setString(out, 'orderID', lastTx.orderID);
@@ -67,15 +59,11 @@ export function parseBody(text: string): { ok: true; value: unknown } | { ok: fa
   }
 }
 
-/** Values that are still the guide's placeholders — highlighted so the user knows what to fill in. */
 export function findPlaceholders(text: string) {
   const found = new Set<string>();
   for (const m of text.matchAll(/"(XXXX[-X]*|<[^">]+>|bxxx[^"]*|YOUR_[A-Z_]+)"/gi)) found.add(m[1]);
   return [...found];
 }
-
-/* ------------------------------------------------------------------ */
-/* Code samples                                                        */
 
 export type SnippetLang = 'curl' | 'node' | 'php' | 'python';
 

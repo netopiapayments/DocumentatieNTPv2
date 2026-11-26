@@ -80,8 +80,6 @@ test('validare semnătură POS și dată', () => {
   assert.match(isoDateTime(new Date()), /[+-]\d\d:\d\d$/);
 });
 
-/* ---------- IPN ---------- */
-
 const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const pub = publicKey.export({ type: 'spki', format: 'pem' });
 const b64u = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');

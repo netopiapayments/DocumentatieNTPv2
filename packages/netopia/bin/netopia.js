@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// CLI NETOPIA: `npx netopia init` integrează plățile cu cardul într-un proiect Node.js.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync } from 'node:fs';
 import { join, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,8 +38,6 @@ Opțiuni init:
   --yes, -y                  Fără întrebări; folosește valorile din opțiuni / mediu
 `;
 
-/* ------------------------------------------------------------------ argumente */
-
 function parseArgs(argv) {
   const out = { _: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -58,8 +55,6 @@ function parseArgs(argv) {
   return out;
 }
 
-/* ------------------------------------------------------------------ input */
-
 let rl;
 const getRl = () => (rl ??= createInterface({ input: process.stdin, output: process.stdout, terminal: true }));
 
@@ -68,14 +63,11 @@ function ask(question, { def, secret } = {}) {
     const r = getRl();
     const q = `${c.b('?')} ${question}${def ? c.d(` (${def})`) : ''}: `;
     if (!secret) return r.question(q, (a) => res(a.trim() || def || ''));
-    // Ascunde ce se tastează pentru cheia API.
     const orig = r._writeToOutput;
     r._writeToOutput = (s) => { if (s.startsWith(q)) orig.call(r, q); else if (s.includes('\n') || s.includes('\r')) orig.call(r, '\n'); else orig.call(r, '*'.repeat(s.length)); };
     r.question(q, (a) => { r._writeToOutput = orig; res(a.trim()); });
   });
 }
-
-/* ------------------------------------------------------------------ detectare proiect */
 
 function readJson(p) { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return undefined; } }
 
@@ -97,7 +89,6 @@ function detect(root) {
   return { pkg, deps, esm, ts, framework, appDir, pm };
 }
 
-/** Fișierul în care e creată aplicația Express (`const app = express()`). */
 function findExpressEntry(root, pkg) {
   const candidates = [pkg.main, 'app.js', 'server.js', 'index.js', 'src/app.js', 'src/server.js', 'src/index.js',
     'app.mjs', 'server.mjs', 'index.mjs', 'src/app.mjs', 'src/server.mjs', 'src/index.mjs',
@@ -108,8 +99,6 @@ function findExpressEntry(root, pkg) {
   }
   return undefined;
 }
-
-/* ------------------------------------------------------------------ fișiere */
 
 function writeFile(root, rel, content, { force, keep, created }) {
   const p = join(root, rel);
@@ -146,9 +135,7 @@ function mountExpress(entry, { esm, ts, routerRel }) {
   const appVar = m[1];
   const fileEsm = esm || /\.mjs$/.test(entry) || ts || /^\s*import\s/m.test(src);
   const importLine = fileEsm ? `import netopiaRouter from '${routerRel}';\n` : `const netopiaRouter = require('${routerRel}');\n`;
-  // Montat imediat după crearea aplicației, deci înainte de express.json() — IPN-ul are nevoie de body-ul brut.
   src = src.replace(m[0], `${m[0]}\n${appVar}.use(netopiaRouter); // NETOPIA: /api/netopia/start, /api/netopia/notify, /netopia/return`);
-  // Importul după ultimul import/require de la început.
   const lines = src.split('\n');
   let last = -1;
   for (let i = 0; i < lines.length; i++) {
@@ -159,8 +146,6 @@ function mountExpress(entry, { esm, ts, routerRel }) {
   writeFileSync(entry, lines.join('\n'));
   return true;
 }
-
-/* ------------------------------------------------------------------ comenzi */
 
 async function init(args) {
   const root = process.cwd();
@@ -196,7 +181,6 @@ async function init(args) {
   if (!/^https?:\/\//.test(appUrl)) fail('--app-url trebuie să înceapă cu http:// sau https://');
   appUrl = appUrl.replace(/\/+$/, '');
 
-  // 1. Variabile de mediu
   const envFile = framework === 'next' ? '.env.local' : '.env';
   upsertEnv(join(root, envFile), {
     NETOPIA_API_KEY: apiKey.trim(),
@@ -208,7 +192,6 @@ async function init(args) {
   ok(`${envFile} actualizat (cheia API nu este afișată)`);
   ensureGitignored(root, envFile);
 
-  // 2. Instalare pachet
   if (args.install !== false) {
     const spec = args.package ?? `netopia@^${VERSION}`;
     const cmd = proj.pm === 'npm' ? ['install', spec] : ['add', spec];
@@ -218,7 +201,6 @@ async function init(args) {
     ok(`pachetul netopia instalat`);
   }
 
-  // 3. Fișiere
   const created = [];
   const opts = { force: !!args.force, created };
   if (framework === 'next') {
@@ -253,7 +235,6 @@ async function init(args) {
   }
   created.forEach((f) => ok(f));
 
-  // 4. Pașii următori
   const local = /localhost|127\.0\.0\.1/.test(appUrl);
   console.log(`
 ${c.b('Gata.')} Mediu: ${envLabel}

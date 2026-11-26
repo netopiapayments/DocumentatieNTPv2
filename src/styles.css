@@ -1,23 +1,17 @@
-/* ==========================================================================
-   Tokens
-   Dark is the primary theme: neutral carbon grays, 1px borders, no shadows,
-   no blur, no gradients. Light mirrors the same rules on a zinc scale.
-   ========================================================================== */
-
 :root {
   --font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --bg: #09090b;
-  --surface: #111113;      /* sidebar, code blocks, tables */
-  --surface-2: #18181b;    /* hover rows, active items */
+  --surface: #111113;
+  --surface-2: #18181b;
   --border: #27272a;
   --border-strong: #3f3f46;
   --text: #e4e4e7;
   --text-2: #a1a1aa;
   --faint: #85858f;
 
-  --accent: #7c8cf8;       /* focus, active markers, links */
+  --accent: #7c8cf8;
   --accent-text: #a5b0fb;
   --accent-soft: rgba(124, 140, 248, 0.1);
 
@@ -37,7 +31,6 @@
   --violet-soft: rgba(169, 155, 220, 0.08);
   --violet-border: rgba(169, 155, 220, 0.22);
 
-  /* Code surfaces (dark in both themes). */
   --code-bg: #111113;
   --code-bar: #0c0c0e;
   --code-border: #27272a;
@@ -87,10 +80,6 @@
   color-scheme: light;
 }
 
-/* ==========================================================================
-   Base
-   ========================================================================== */
-
 *,
 *::before,
 *::after { box-sizing: border-box; }
@@ -131,10 +120,6 @@ kbd {
 .muted { color: var(--text-2); }
 
 :focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
-
-/* ==========================================================================
-   Top bar
-   ========================================================================== */
 
 .progress {
   position: fixed;
@@ -205,7 +190,6 @@ kbd {
 }
 .icon-btn:hover { background: var(--surface-2); color: var(--text); }
 
-/* Dark is default: show the moon; the sun appears in light mode. */
 [data-theme-toggle] .i:first-child { display: none; }
 :root[data-theme='light'] [data-theme-toggle] .i:first-child { display: block; }
 :root[data-theme='light'] [data-theme-toggle] .i:last-child { display: none; }
@@ -247,10 +231,6 @@ kbd {
 
 .only-mobile { display: none; }
 .scrim { display: none; }
-
-/* ==========================================================================
-   Layout
-   ========================================================================== */
 
 .layout {
   display: grid;
@@ -377,10 +357,6 @@ kbd {
 .session-row b.missing { color: var(--amber); }
 .session-row code { font-size: 11.5px; color: var(--text-2); }
 
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -401,10 +377,6 @@ kbd {
 .btn-ghost { border: 1px solid var(--border); color: var(--text); }
 .btn-ghost:hover { border-color: var(--border-strong); background: var(--surface-2); }
 .link-btn { color: var(--accent-text); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
-
-/* ==========================================================================
-   Hero + section index
-   ========================================================================== */
 
 .hero { padding: 72px 0 40px; }
 .hero-title {
@@ -468,14 +440,9 @@ kbd {
 .ov-title { font-size: 14px; font-weight: 500; color: var(--text); }
 .ov-sum { font-size: 13px; line-height: 1.5; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ==========================================================================
-   Document typography
-   ========================================================================== */
-
 .doc-section { padding-top: 8px; }
 .doc-section + .doc-section { margin-top: 64px; border-top: 1px solid var(--border); padding-top: 56px; }
 
-/* Prose stays at a comfortable measure; tables, code and consoles use the full column. */
 .doc p, .doc ul, .doc ol, .doc h2, .doc h3, .doc h4, .callout, .checklist-progress { max-width: var(--prose); }
 .doc .checklist, .doc .steps, .doc .changelog { max-width: none; }
 
@@ -525,7 +492,6 @@ kbd {
 .doc h2:hover .anchor, .doc h3:hover .anchor, .doc h4:hover .anchor { opacity: 1; }
 .anchor:hover { color: var(--text); }
 
-/* Brief marker on the heading you just jumped to. */
 .flash { animation: flash 1.2s ease-out; }
 @keyframes flash {
   0%, 40% { color: var(--accent-text); }
@@ -561,10 +527,6 @@ kbd {
   overflow-wrap: anywhere;
 }
 
-/* ==========================================================================
-   Callouts — tinted 1px box in the callout's semantic hue
-   ========================================================================== */
-
 .callout {
   --c: var(--sky);
   --c-soft: var(--sky-soft);
@@ -584,10 +546,6 @@ kbd {
 .callout-body p + p { margin-top: 6px; }
 .callout-body strong { color: var(--text); }
 .callout-body em { font-style: normal; }
-
-/* ==========================================================================
-   Tables
-   ========================================================================== */
 
 .table-wrap {
   margin: 18px 0 26px;
@@ -639,10 +597,6 @@ kbd {
 
 .t-cards .copyable, .table-wrap td code { cursor: copy; transition: color 0.12s; }
 .t-cards .copyable:hover, .table-wrap td code:hover { color: var(--accent-text); }
-
-/* ==========================================================================
-   Steps / checklist / changelog / glossary
-   ========================================================================== */
 
 .steps { list-style: none; padding: 0; margin: 22px 0 30px; position: relative; }
 .steps::before { content: ''; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 1px; background: var(--border); }
@@ -732,10 +686,6 @@ kbd {
 .gl-item dd { margin: 0; color: var(--text-2); font-size: 14px; max-width: var(--prose); }
 .gl-item .gl-full { grid-column: 1 / -1; }
 
-/* ==========================================================================
-   Code blocks
-   ========================================================================== */
-
 .code-block {
   margin: 16px 0 24px;
   border-radius: var(--radius-lg);
@@ -776,10 +726,6 @@ kbd {
 }
 .shiki code { font-family: inherit; }
 
-/* ==========================================================================
-   Playground
-   ========================================================================== */
-
 .example { margin: 20px 0 28px; }
 .example > .code-block { margin: 0; }
 
@@ -800,7 +746,6 @@ kbd {
 }
 .pg-heading { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
 
-/* HTTP method badges: muted, monochrome per verb. */
 .method {
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -992,20 +937,12 @@ button.hint-warn:hover { color: #e4c27f; }
 .pg-error .i { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .pg-error small { color: var(--code-muted); font-family: var(--font-mono); font-size: 11.5px; }
 
-/* ==========================================================================
-   Footer
-   ========================================================================== */
-
 .doc-footer { margin-top: 88px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--faint); }
 .foot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
 .foot-row a { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
 .foot-row a:hover { color: var(--text); }
 .foot-row code { font-size: 11.5px; }
 .notice { margin: 16px 0 0; font-size: 12px; color: var(--faint); }
-
-/* ==========================================================================
-   Drawer
-   ========================================================================== */
 
 .drawer-backdrop {
   position: fixed;
@@ -1097,10 +1034,6 @@ button.hint-warn:hover { color: #e4c27f; }
 .privacy .i { margin-top: 2px; }
 .privacy p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text-2); }
 
-/* ==========================================================================
-   Command palette
-   ========================================================================== */
-
 .palette {
   position: fixed;
   inset: 0;
@@ -1137,10 +1070,6 @@ button.hint-warn:hover { color: #e4c27f; }
 .palette-foot { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--faint); }
 .palette-foot kbd { margin-right: 3px; }
 
-/* ==========================================================================
-   Toasts
-   ========================================================================== */
-
 .toasts {
   position: fixed;
   bottom: 20px;
@@ -1170,10 +1099,6 @@ button.hint-warn:hover { color: #e4c27f; }
 .toast-info .i { color: #7ab8dc; }
 .toast-error .i { color: #e07a7a; }
 .toast.out { opacity: 0; }
-
-/* ==========================================================================
-   Responsive
-   ========================================================================== */
 
 @media (max-width: 1240px) {
   .layout { grid-template-columns: 256px minmax(0, 1fr); }

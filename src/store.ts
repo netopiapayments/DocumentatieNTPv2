@@ -1,18 +1,9 @@
-/**
- * Client-side state: credentials and the last transaction.
- *
- * The documentation only ever calls the NETOPIA Sandbox. Credentials never leave the browser
- * except in the request sent directly to the Sandbox API. They live in sessionStorage by default,
- * or in localStorage when the user opts in to "remember".
- */
 
 export interface Credentials { apiKey: string; posSignature: string }
 
 export interface LastTx { ntpID: string; orderID: string; at: number }
 
-/** The only host requests are sent to. */
 export const SANDBOX_URL = 'https://secure.sandbox.netopia-payments.com';
-/** Shown in code samples only, for features that don't exist in Sandbox (e.g. Money Send). Never called. */
 export const PRODUCTION_URL = 'https://secure.mobilpay.ro/pay';
 
 const KEY = 'ntp-docs:v1';
@@ -34,7 +25,6 @@ function load(): State {
   const local = read(() => localStorage);
   const session = read(() => sessionStorage);
   const parsed = local?.remember ? local : local || session ? { ...local, ...session } : null;
-  // Older versions stored { sandbox, production } credentials; keep only Sandbox, drop Production.
   const savedCreds = parsed?.creds?.sandbox ?? parsed?.creds ?? {};
   const tx = parsed?.lastTx;
   return {
@@ -56,13 +46,11 @@ function persist() {
       sessionStorage.removeItem(KEY);
     } else {
       sessionStorage.setItem(KEY, json);
-      // Keep non-sensitive preferences across visits even when credentials aren't remembered.
       localStorage.setItem(KEY, JSON.stringify({ checklist: state.checklist, remember: false }));
     }
   }, undefined);
 }
 
-// Rewrite storage right away so credentials saved for Production by older versions are erased.
 persist();
 
 function emit() {
