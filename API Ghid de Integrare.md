@@ -804,7 +804,6 @@ Această secțiune înregistrează toate modificările aduse documentului (adău
 | 2.6 | 28.08.2026 | Adăugare | Documentarea faptului că punctele de vânzare nu pot fi adăugate în Sandbox și se configurează din consola NETOPIA; adăugarea cheii publice RSA pentru verificarea IPN și precizarea că este aceeași în Live/Producție și Sandbox. |
 | 2.7 | 28.08.2026 | Adăugare | Adăugare cheie publică RSA pentru verificarea semnăturii JWT/RS512 a notificărilor IPN în Secțiunea 3.4; cheia este comună pentru mediile Live/Producție și Sandbox. |
 | 2.8 | 11.11.2026 | Modificare | Secțiunea 7.4: precizarea că Money Send nu este disponibil în Sandbox; eliminarea notei privind copierea/distribuirea; corectarea legăturii din Cuprins către Secțiunea 10 — Versionare Document; ordonarea cronologică a tabelului de versiuni. |
-| 2.9 | 11.11.2026 | Adăugare | Secțiunea 10 nouă — Integrare Automată (SDK, CLI și Agent AI): pachetul netopia, comanda npx netopia init, skill-ul pentru agenți AI, variabile de mediu și verificări înainte de Producție; Versionare Document devine Secțiunea 11. |
 | 2.10 | 12.11.2026 | Modificare | Precizarea că posID din Secțiunile 6.2 (Expirare Link) și 6.3 (Interogare Status) este semnătura POS (aceeași valoare ca order.posSignature); actualizarea exemplelor și a Secțiunii 3.2. |
 
 ---
