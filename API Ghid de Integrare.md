@@ -205,7 +205,7 @@ tX2aJkqp4PV3o5kI4bqHq/MS7HVJ7yxtj/p8kawlVYipGsQj3ypgltQ3bnYV/LRq
 ```json
 {
   "payment": {
-    "paymentURL": "https://secure.netopia-payments.com/ui/card?p=...",
+    "paymentURL": "https://secure-sandbox.netopia-payments.com/ui/card?p=...",
     "status": 1
   }
 }
@@ -679,7 +679,7 @@ Dacă banca emitentă a cardului solicită o verificare suplimentară, obiectul 
       "paReq": "AT5ewtLVDsEgB5lcRjeEoSMF6RZ4A3s..."
     },
     "type": "Authentication3D",
-    "url": "https://secure.sandbox.netopia-payments.com/sandbox/authorize"
+    "url": "https://secure-sandbox.netopia-payments.com/sandbox/authorize"
   },
   "error": {
     "code": "100",
