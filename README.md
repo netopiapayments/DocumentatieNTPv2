@@ -1,15 +1,27 @@
-# NETOPIA API — Ghid de Integrare
+# NETOPIA Payments — Ghid de Integrare API v2
 
-Documentația web NETOPIA Payments API v2, generată din `API Ghid de Integrare.md`.
+Documentația oficială pentru integrarea plăților cu cardul prin NETOPIA Payments API v2, cu exemple care pot fi rulate direct din browser în mediul Sandbox.
 
-## Rulare
+Site: https://netopia-payments.com/
+
+## Ce conține
+
+- Checklist cu ce trebuie pregătit înainte de integrare
+- Medii de lucru (Sandbox și Producție), autentificare și securitate
+- Fluxul unei plăți: inițiere, redirect, notificarea IPN
+- Operațiuni: status, expirare, creditare / refund
+- Funcționalități speciale: plăți recurente și One-Click, rate, plăți divizate, Money Send
+- Integrare directă card, coduri de stare și erori, carduri de test, glosar
+
+## Contact
+
+implementare@netopia-payments.com
+
+## Dezvoltare
+
+Conținutul se editează în `API Ghid de Integrare.md`.
 
 ```bash
 npm install
 npm run dev
-npm run build
 ```
-
-## Publicare
-
-Push pe `main` → Cloudflare Pages publică site-ul automat (build `npm run build`, output `dist`).
