@@ -1,39 +1,20 @@
 # NETOPIA Payments API v2 — referință
 
-> Generat automat din „API Ghid de Integrare.md” v2.9 de `npm run sync:reference`. Nu editați manual.
+> Generat automat din „API Ghid de Integrare.md” v2.10 de `npm run sync:reference`. Nu editați manual.
 
 ## 1. Checklist Rapid de Implementare
 
 ### Checklist — Verificare Rapidă
 
-Folosiți acest checklist înainte de a scrie cod:
+Ce trebuie să aveți pregătit înainte de a începe integrarea. Fiecare punct conține un rezumat și o trimitere la secțiunea relevantă pentru detalii complete.
 
-- ☐ Acces la Consola Merchant (Sandbox + Producție)
-- ☐ Cheie API creată din Profil → Securitate
-- ☐ Semnătură POS identificată
-- ☐ IP-uri NETOPIA adăugate în whitelist (Producție: 217.156.103.68 / Sandbox: 217.156.103.69)
-- ☐ URL de notificare (notifyUrl) configurat — HTTPS, răspunde cu { "errorCode": 0 }
-- ☐ Plan de verificare JWT pentru IPN stabilit
-- ☐ Gestionare redirect pe paymentURL planificată
-- ☐ Stocare ntpID și payment token la primul IPN implementată
-- ☐ Conformitate PCI verificată (TLS 1.2+, fără logare date sensibile)
-
-Fiecare punct este detaliat mai jos cu explicații și trimiteri la secțiunile relevante.
-
-Folosiți această listă de verificare înainte de a scrie cod. Fiecare punct conține un rezumat și o trimitere la secțiunea relevantă pentru detalii complete.
-
-- Acces la Consola NETOPIA (Sandbox și Producție) — Creați cont pe [admin.netopia-payments.com](https://admin.netopia-payments.com). → Detalii: Secțiunea 2 — Medii de Lucru și Endpoints API
-- Cheie API creată din Profil → Securitate — Generați chei separate pentru fiecare mediu; se trimite în header-ul Authorization. → Detalii: Secțiunea 3.1 — Cheia API
-- Puncte de vânzare configurate din consola NETOPIA — În Sandbox nu se pot adăuga POS-uri; acestea se creează și se configurează în mediul Live/Producție.
-- Semnătură POS identificată — Admin → Puncte de vânzare → Setări tehnice; se trimite în order.posSignature. → Detalii: Secțiunea 3.2 — Semnătura POS
-- IP-uri NETOPIA în whitelist — acceptați IPN doar de la:
-
-  → Detalii: Secțiunea 3.3 — Whitelisting IP pentru IPN
-- URL de notificare (notifyUrl) — cerințe obligatorii: HTTPS public, răspunde cu { "errorCode": 0 } și HTTP 200 OK; NETOPIA retrimite dacă nu răspunde corect. → Detalii: Secțiunea 5.2 — Gestionarea Notificării IPN
-- Plan de verificare JWT pentru IPN — pas cu pas: salvați body-ul raw, extrageți JWT din Authorization, decodificați sub, calculați SHA-512 pe body, comparați cu sub, verificați semnătura RS512 cu cheia publică. → Detalii: Secțiunea 3.4 — Securitatea IPN: Verificarea JWT
-- Gestionare redirect pe paymentURL — redirecționați browser-ul la payment.paymentURL; gestionați redirectUrl/cancelUrl; nu stocați paymentURL pentru mai târziu. → Detalii: Secțiunea 4 și Secțiunea 5.1
-- Stocare ntpID și token la primul IPN — la status 3 salvați payment.ntpID (necesar pentru refund/status/expire) și, dacă ați trimis clientID, salvați payment.instrument.token pentru plăți recurente. → Detalii: Secțiunea 5.2, Secțiunea 6 și Secțiunea 7.1
-- Conformitate PCI — nu logați date sensibile; folosiți TLS 1.2+; pentru integrare directă card este necesară certificare PCI-DSS. → Detalii: Secțiunea 9 — Integrare Directă Card
+- ☐ Acces la Consola NETOPIA (Sandbox și Producție) — Creați cont pe [admin.netopia-payments.com](https://admin.netopia-payments.com). → Detalii: Secțiunea 2 — Medii de Lucru și Endpoints API
+- ☐ Cheie API creată din Profil → Securitate — Generați chei separate pentru fiecare mediu; se trimite în header-ul Authorization. → Detalii: Secțiunea 3.1 — Cheia API
+- ☐ Puncte de vânzare configurate din consola NETOPIA — În Sandbox nu se pot adăuga POS-uri; acestea se creează și se configurează în mediul Live/Producție.
+- ☐ Semnătură POS identificată — Admin → Puncte de vânzare → Setări tehnice; se trimite în order.posSignature. → Detalii: Secțiunea 3.2 — Semnătura POS
+- ☐ IP-urile NETOPIA permise în firewall — 217.156.103.68 (Producție) și 217.156.103.69 (Sandbox), de la care vin notificările IPN. → Detalii: Secțiunea 3.3 — Whitelisting IP pentru IPN
+- ☐ Domeniu public pe HTTPS pentru notifyUrl și redirectUrl — NETOPIA trebuie să poată trimite notificările IPN către serverul dumneavoastră. → Detalii: Secțiunea 5.2 — Gestionarea Notificării IPN
+- ☐ Server cu TLS 1.2+ — cerință PCI DSS. → Detalii: Glosar — PCI DSS
 
 ---
 
@@ -82,7 +63,7 @@ Authorization: YOUR_API_KEY
 
 ### 3.2 Semnătura POS (POS Signature)
 
-Se găsește în Admin → Puncte de vânzare → Setări tehnice și se trimite în câmpul order.posSignature.
+Se găsește în Admin → Puncte de vânzare → Setări tehnice și se trimite în câmpul order.posSignature. Aceeași valoare se trimite în câmpul posID la operațiunile de Expirare Link și Interogare Status (Secțiunea 6).
 
 ### 3.3 Whitelisting IP pentru IPN
 
@@ -240,16 +221,20 @@ NETOPIA va trimite un request POST la config.notifyUrl de fiecare dată când st
 **Endpoint: POST /operation/expire**
 
 ```json
-{ "posID": "XXXX", "ntpID": "1309088", "orderID": "1234" }
+{ "posID": "XXXX-XXXX-XXXX-XXXX-XXXX", "ntpID": "1309088", "orderID": "1234" }
 ```
+
+> *Notă: `posID` este semnătura POS — aceeași valoare trimisă în `order.posSignature` la inițierea plății.*
 
 ### 6.3 Interogare Status
 
 **Endpoint: POST /operation/status**
 
 ```json
-{ "posID": "XXXX", "ntpID": "1309088", "orderID": "1234" }
+{ "posID": "XXXX-XXXX-XXXX-XXXX-XXXX", "ntpID": "1309088", "orderID": "1234" }
 ```
+
+> *Notă: `posID` este semnătura POS — aceeași valoare trimisă în `order.posSignature` la inițierea plății.*
 
 > *Notă: Acest apel este util pentru a verifica starea finală a unei tranzacții în cazul în care IPN-ul nu a putut fi procesat din motive excepționale.*
 
@@ -686,7 +671,7 @@ Pe lângă integrarea manuală descrisă în secțiunile 4–7, proiectele **Nod
 | --- | --- |
 | SDK (`import { Netopia } from 'netopia'`) | Client fără dependențe pentru /payment/card/start, /operation/status, /operation/credit, /operation/expire și verificarea IPN (JWT RS512 + SHA-512). |
 | CLI (`npx netopia init`) | Detectează proiectul, scrie credențialele, instalează pachetul și generează rutele de plată. |
-| Skill pentru agenți AI (`npx netopia skill`) | Instrucțiuni pentru agenți AI (ex. Claude Code) care completează integrarea în codul existent sau o scriu în alt limbaj, pe baza acestui ghid. |
+| Skill pentru agenți AI (`npx netopia skill`) | Instrucțiuni pentru agenți AI care completează integrarea în codul existent sau o scriu în alt limbaj, pe baza acestui ghid. |
 
 ### 10.2 Ce aveți nevoie
 
@@ -756,7 +741,7 @@ if (paymentURL) window.location.href = paymentURL;
 npx netopia skill
 ```
 
-Comanda copiază skill-ul în `.claude/skills/netopia-integration/`. La o cerere de tipul „integrează plățile NETOPIA”, agentul:
+Comanda copiază skill-ul în proiect. La o cerere de tipul „integrează plățile NETOPIA”, agentul:
 
 - folosește CLI-ul pentru Next.js și Express, apoi completează `resolveOrder`, `onPaymentUpdate` și butonul de plată în codul existent;
 - pentru alte framework-uri Node.js folosește SDK-ul direct;

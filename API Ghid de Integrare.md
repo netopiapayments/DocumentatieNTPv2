@@ -709,7 +709,7 @@ Pe lângă integrarea manuală descrisă în secțiunile 4–7, proiectele **Nod
 | --- | --- |
 | SDK (`import { Netopia } from 'netopia'`) | Client fără dependențe pentru /payment/card/start, /operation/status, /operation/credit, /operation/expire și verificarea IPN (JWT RS512 + SHA-512). |
 | CLI (`npx netopia init`) | Detectează proiectul, scrie credențialele, instalează pachetul și generează rutele de plată. |
-| Skill pentru agenți AI (`npx netopia skill`) | Instrucțiuni pentru agenți AI (ex. Claude Code) care completează integrarea în codul existent sau o scriu în alt limbaj, pe baza acestui ghid. |
+| Skill pentru agenți AI (`npx netopia skill`) | Instrucțiuni pentru agenți AI care completează integrarea în codul existent sau o scriu în alt limbaj, pe baza acestui ghid. |
 
 ### 10.2 Ce aveți nevoie
 
@@ -779,7 +779,7 @@ if (paymentURL) window.location.href = paymentURL;
 npx netopia skill
 ```
 
-Comanda copiază skill-ul în `.claude/skills/netopia-integration/`. La o cerere de tipul „integrează plățile NETOPIA”, agentul:
+Comanda copiază skill-ul în proiect. La o cerere de tipul „integrează plățile NETOPIA”, agentul:
 
 - folosește CLI-ul pentru Next.js și Express, apoi completează `resolveOrder`, `onPaymentUpdate` și butonul de plată în codul existent;
 - pentru alte framework-uri Node.js folosește SDK-ul direct;

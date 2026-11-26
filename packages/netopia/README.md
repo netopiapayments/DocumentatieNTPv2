@@ -35,10 +35,10 @@ NETOPIA_API_KEY=… NETOPIA_POS_SIGNATURE=XXXX-XXXX-XXXX-XXXX-XXXX NETOPIA_POS_I
 ## Skill pentru agenți AI
 
 ```bash
-npx netopia skill   # copiază skill/netopia-integration în .claude/skills/
+npx netopia skill
 ```
 
-Skill-ul îi spune agentului (Claude Code etc.) cum să ceară credențialele, când să folosească CLI-ul, cum să integreze în proiecte nestandard sau în alte limbaje (PHP, Python…) și ce reguli să verifice la final. `reference.md` este generat din ghid: după orice modificare a „API Ghid de Integrare.md” rulați `npm run sync:reference`.
+Skill-ul îi spune agentului AI cum să ceară credențialele, când să folosească CLI-ul, cum să integreze în proiecte nestandard sau în alte limbaje (PHP, Python…) și ce reguli să verifice la final. `reference.md` este generat din ghid: după orice modificare a „API Ghid de Integrare.md” rulați `npm run sync:reference`.
 
 ## SDK
 
