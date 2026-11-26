@@ -11,7 +11,7 @@ export interface Credentials { apiKey: string; posSignature: string }
 export interface LastTx { ntpID: string; orderID: string; at: number }
 
 /** The only host requests are sent to. */
-export const SANDBOX_URL = 'https://secure.sandbox.netopia-payments.com';
+export const SANDBOX_URL = 'https://secure-sandbox.netopia-payments.com';
 /** Shown in code samples only, for features that don't exist in Sandbox (e.g. Money Send). Never called. */
 export const PRODUCTION_URL = 'https://secure.mobilpay.ro/pay';
 

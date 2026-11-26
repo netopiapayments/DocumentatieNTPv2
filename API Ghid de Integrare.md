@@ -67,10 +67,10 @@ Ce trebuie să aveți pregătit înainte de a începe integrarea. Fiecare punct 
 
 | **Operațiune** | **Sandbox** | **Producție** |
 | --- | --- | --- |
-| Inițiere Plată | <https://secure.sandbox.netopia-payments.com/payment/card/start> | <https://secure.mobilpay.ro/pay/payment/card/start> |
-| Credit / Refund | <https://secure.sandbox.netopia-payments.com/operation/credit> | <https://secure.mobilpay.ro/pay/operation/credit> |
-| Expirare Link | <https://secure.sandbox.netopia-payments.com/operation/expire> | <https://secure.mobilpay.ro/pay/operation/expire> |
-| Interogare Status | <https://secure.sandbox.netopia-payments.com/operation/status> | <https://secure.mobilpay.ro/pay/operation/status> |
+| Inițiere Plată | <https://secure-sandbox.netopia-payments.com/payment/card/start> | <https://secure.mobilpay.ro/pay/payment/card/start> |
+| Credit / Refund | <https://secure-sandbox.netopia-payments.com/operation/credit> | <https://secure.mobilpay.ro/pay/operation/credit> |
+| Expirare Link | <https://secure-sandbox.netopia-payments.com/operation/expire> | <https://secure.mobilpay.ro/pay/operation/expire> |
+| Interogare Status | <https://secure-sandbox.netopia-payments.com/operation/status> | <https://secure.mobilpay.ro/pay/operation/status> |
 
 ---
 
