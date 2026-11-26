@@ -1,3 +1,4 @@
+/** Interactive "try it" console mounted on every runnable example from the guide. */
 import type { Example } from 'virtual:netopia-docs';
 import { store, SANDBOX_URL, PRODUCTION_URL } from './store';
 import { createEditor, type JsonEditor } from './editor';
@@ -81,7 +82,9 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
   const envPill = $('[data-env-pill]');
   const urlBase = $('.pg-url-base');
 
+  /** Features that don't exist in Sandbox (e.g. Money Send) can't be run from the docs at all. */
   const unavailable = () => !ex.sandbox;
+  /** Code samples for such features show the Production URL; requests are only ever sent to Sandbox. */
   const baseUrl = () => (unavailable() ? PRODUCTION_URL : SANDBOX_URL);
 
   const template = () => applyTemplate(ex.body, ex.path, { creds: store.creds(), lastTx: store.lastTx });
@@ -97,6 +100,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     () => run(),
   );
 
+  /* ---------- tabs ---------- */
   function setTab(next: Tab, broadcast = false) {
     tab = next;
     root.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === next)));
@@ -122,11 +126,13 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     const lang = SNIPPET_LANGS.find((l) => l.id === tab)!;
     const code = snippet(lang.id, baseUrl() + ex.path, parsed.value);
     snippetHost.dataset.code = code;
+    // Show the code immediately; colours arrive when the highlighter is ready.
     snippetHost.innerHTML = `<pre class="shiki github-dark-default"><code>${escapeHtml(code)}</code></pre>`;
     const html = await highlight(code, lang.shiki);
     if (snippetHost.dataset.code === code) snippetHost.innerHTML = html;
   }
 
+  /* ---------- helpers row ---------- */
   function renderHelpers() {
     const text = editor.get();
     const parts: string[] = [];
@@ -182,6 +188,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
     }
   });
 
+  /* ---------- tools ---------- */
   $('[data-reset]').addEventListener('click', () => {
     editor.set(template());
     dirty = false;
@@ -198,6 +205,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
 
   runBtn.addEventListener('click', () => run());
 
+  /* ---------- state sync ---------- */
   envPill.textContent = unavailable() ? 'Indisponibil în Sandbox' : 'Sandbox';
   urlBase.textContent = baseUrl();
   root.classList.toggle('is-unavailable', unavailable());
@@ -216,6 +224,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
   store.subscribe(syncState);
   syncState();
 
+  /* ---------- run ---------- */
   async function run() {
     if (unavailable()) {
       ui.toast('Indisponibil în Sandbox — nu poate fi rulat din documentație', 'info');
@@ -232,6 +241,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
       return;
     }
 
+    // Requests go to the Sandbox only — there is no way to call Production from the docs.
     const url = SANDBOX_URL + ex.path;
     runBtn.disabled = true;
     root.classList.add('is-running');
@@ -246,7 +256,7 @@ export function mountPlayground(host: HTMLElement, ex: Example, refs: Refs, ui: 
       const text = await res.text();
       const ms = Math.round(performance.now() - started);
       let data: any = null;
-      try { data = JSON.parse(text); } catch {}
+      try { data = JSON.parse(text); } catch { /* not JSON */ }
       await renderResult(res, text, data, ms, parsed.value as any);
     } catch (err) {
       showResponse(

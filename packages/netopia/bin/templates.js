@@ -1,5 +1,9 @@
+// Fișierele generate de `netopia init`. Fiecare funcție întoarce conținutul unui fișier.
+// Fișierele „hooks” conțin logica comerciantului și nu se suprascriu niciodată.
 
 const HEADER = '// Generat de `npx netopia init`. Poate fi regenerat cu --force (fișierul cu hook-uri nu se suprascrie).';
+
+/* ------------------------------------------------------------------ Next.js (App Router) */
 
 export function nextLib({ ts }) {
   const t = (typed, plain) => (ts ? typed : plain);
@@ -120,6 +124,8 @@ export default function NetopiaReturn() {
 `;
 }
 
+/* ------------------------------------------------------------------ Express */
+
 const RETURN_HTML = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plată</title>
 <main style="max-width:560px;margin:64px auto;padding:16px;font-family:system-ui,sans-serif"><h1>Mulțumim!</h1>
 <p>Plata este în curs de confirmare. Vei primi un e-mail imediat ce comanda este confirmată.</p><p><a href="/">Înapoi la magazin</a></p></main>`;
@@ -224,6 +230,8 @@ ${exp('onPaymentUpdate')}(ipn, raw) {
 }
 ${esm ? '' : '\nmodule.exports = { resolveOrder, onPaymentUpdate };\n'}`;
 }
+
+/* ------------------------------------------------------------------ Node fără framework */
 
 export function plainHandlers() {
   return `${HEADER}

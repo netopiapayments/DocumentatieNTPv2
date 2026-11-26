@@ -21,8 +21,11 @@ export declare class NetopiaError extends Error {
 export interface NetopiaOptions {
   apiKey: string;
   posSignature: string;
+  /** Necesar pentru getStatus / expire. */
   posID?: string | number;
+  /** Implicit true. */
   sandbox?: boolean;
+  /** Suprascrie URL-ul API-ului (teste / proxy). */
   baseUrl?: string;
   notifyUrl?: string;
   redirectUrl?: string;
@@ -39,6 +42,7 @@ export interface Address {
   firstName?: string;
   lastName?: string;
   city?: string;
+  /** Cod numeric ISO 3166, ex. 642 = România. */
   country?: number;
   countryName?: string;
   state?: string;
@@ -49,6 +53,7 @@ export interface Address {
 export interface StartPaymentInput {
   amount: number;
   currency?: string;
+  /** Generat automat dacă lipsește. Trebuie să fie unic per tranzacție. */
   orderID?: string;
   description?: string;
   dateTime?: string;
@@ -58,14 +63,18 @@ export interface StartPaymentInput {
   notifyUrl?: string;
   redirectUrl?: string;
   cancelUrl?: string;
+  /** Prima plată pentru tokenizare (ghid §7.1). */
   clientID?: string;
+  /** Plată ulterioară cu token salvat (ghid §7.1). Necesită ipAddress. */
   token?: string;
   scaExemptionInd?: 'MIT' | 'TRA';
+  /** IP-ul plătitorului — obligatoriu la plățile cu token. */
   ipAddress?: string;
   installments?: { selected?: number; available?: number[] };
   split?: { amount: number; posID: number }[];
   products?: unknown[];
   data?: Record<string, unknown>;
+  /** Câmpuri suplimentare în payment.data. */
   paymentData?: Record<string, string>;
 }
 

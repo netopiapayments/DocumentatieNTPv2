@@ -47,6 +47,7 @@ test('Express ESM: generează routerul și îl montează înainte de express.jso
   assert.equal(statSync(join(d, '.env')).mode & 0o077, 0, '.env trebuie să fie privat');
   assert.match(read(d, '.gitignore'), /^\.env$/m);
 
+  // A doua rulare nu dublează montarea și păstrează hook-urile.
   writeFileSync(join(d, 'netopia/hooks.js'), '// editat de comerciant\n');
   run(d, ['--force']);
   assert.equal(read(d, 'server.js').match(/app\.use\(netopiaRouter\)/g).length, 1);

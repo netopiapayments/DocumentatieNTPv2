@@ -1,3 +1,16 @@
+/**
+ * Vite plugin: turns the integration guide (Markdown) into the data the site renders.
+ *
+ * The Markdown file is the single source of truth. Everything shown on the site —
+ * navigation, metadata, examples that can be run, search index — is derived from it
+ * at build time, so editing the .md on GitHub and pushing is enough to update the site.
+ *
+ * Runnable examples are detected automatically (JSON request bodies, with the endpoint
+ * taken from the surrounding section). Authors can override detection by placing an
+ * HTML comment right before a code block:
+ *   <!-- try: /operation/credit -->   force an example to call this endpoint
+ *   <!-- try: off -->                 never make this block runnable
+ */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -13,7 +26,9 @@ const NO_SANDBOX_RE = /nu\s+(?:este|e|poate\s+fi)\s+(?:disponibil\w*|testat\w*|u
 const ENDPOINT_RE = /\/(payment\/card\/start|operation\/(?:credit|expire|status)|disbursement\/card\/auth)\b/;
 
 export interface DocsOptions {
+  /** Path to the Markdown source, relative to the project root. */
   source: string;
+  /** GitHub repository ("owner/name") used for the "Edit on GitHub" / history links. */
   repo?: string;
 }
 
@@ -47,6 +62,8 @@ export function netopiaDocs(options: DocsOptions): Plugin {
   };
 }
 
+/* ------------------------------------------------------------------ */
+
 interface TocItem { id: string; level: number; num: string; title: string }
 interface Example { id: number; path: string; title: string; subtitle: string; section: string; body: string; sandbox: boolean }
 interface SearchEntry { id: string; title: string; section: string; text: string }
@@ -60,6 +77,7 @@ function buildDocs(raw: string, hl: Highlighter, sourceName: string, repo: strin
   const env: Record<string, unknown> = {};
   const tokens = md.parse(body, env);
 
+  /* Pass 1 — headings get stable ids, collected for the navigation. */
   const used = new Map<string, number>();
   const headings: TocItem[] = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -74,6 +92,7 @@ function buildDocs(raw: string, hl: Highlighter, sourceName: string, repo: strin
     headings.push({ id, level, num, title });
   }
 
+  /* Pass 2 — links, runnable examples, search index, section summaries. */
   const examples: Example[] = [];
   const search: SearchEntry[] = [];
   const summaries = new Map<string, string>();
@@ -83,6 +102,7 @@ function buildDocs(raw: string, hl: Highlighter, sourceName: string, repo: strin
   let endpoint: string | null = null;
   let label = '';
   let override: string | undefined;
+  // Set when the current section says the feature is not available in Sandbox (e.g. Money Send).
   let noSandbox = false;
   let entry: SearchEntry | undefined;
   let hIndex = 0;
@@ -154,10 +174,12 @@ function buildDocs(raw: string, hl: Highlighter, sourceName: string, repo: strin
 
   for (const s of search) s.text = s.text.replace(/\s+/g, ' ').trim().slice(0, 700);
 
+  /* Render. */
   installRenderRules(md, hl);
   let html = md.renderer.render(tokens, md.options, env);
   html += '</section>';
 
+  // Single-letter H3s (glossary "A", "B", …) stay linkable but don't clutter the navigation.
   const toc = headings.filter((h) => h.level === 2 || (h.level === 3 && h.title.length > 2));
   const cards: SectionCard[] = toc
     .filter((h) => h.level === 2)
@@ -176,6 +198,9 @@ function buildDocs(raw: string, hl: Highlighter, sourceName: string, repo: strin
     search,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Render rules                                                        */
 
 function installRenderRules(md: InstanceType<typeof MarkdownIt>, hl: Highlighter) {
   const r = md.renderer.rules;
@@ -244,6 +269,10 @@ function installRenderRules(md: InstanceType<typeof MarkdownIt>, hl: Highlighter
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+
+/** Pulls the title/metadata block above the first H2 and drops a "Cuprins" section (the site has its own nav). */
 function splitPreamble(src: string) {
   const lines = src.split('\n');
   const firstH2 = lines.findIndex((l) => /^##\s/.test(l));
@@ -285,7 +314,9 @@ function splitPreamble(src: string) {
   };
 }
 
+/** "** text **" / "**text: **" are not bold in CommonMark; tighten them so they render as intended. */
 function fixLooseBold(src: string) {
+  // Only touch prose: split on fenced code blocks and leave the odd-indexed (code) parts alone.
   return src
     .split(/(^```[\s\S]*?^```)/m)
     .map((part, i) =>
@@ -333,6 +364,7 @@ function splitNumber(text: string) {
 const norm = (s: string) => s.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 const stripNum = (s: string) => norm(s.replace(/^[\d.\-\s]+/, ''));
 
+/** Links to the original Confluence page (or any URL with a #fragment matching a heading) become in-page anchors. */
 function rewriteLinks(inline: any, headings: TocItem[]) {
   for (const c of inline.children ?? []) {
     if (c.type !== 'link_open') continue;
@@ -342,7 +374,7 @@ function rewriteLinks(inline: any, headings: TocItem[]) {
     const isConfluence = /atlassian\.net\/wiki/.test(href);
     if (!isConfluence && hash !== 0) continue;
     let frag = href.slice(hash + 1);
-    try { frag = decodeURIComponent(frag); } catch {}
+    try { frag = decodeURIComponent(frag); } catch { /* keep raw */ }
     const target =
       headings.find((h) => h.id === frag) ??
       headings.find((h) => norm(h.id) === norm(frag)) ??
@@ -374,12 +406,14 @@ function langLabel(lang: string) {
   return map[lang] ?? lang.toUpperCase();
 }
 
+/** Commit info for the "last synced" badge; works locally, on Cloudflare Pages and in GitHub Actions. */
 function gitInfo(sourceName: string, configuredRepo: string) {
   const run = (cmd: string) => {
     try { return execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return ''; }
   };
   const quoted = JSON.stringify(sourceName);
   const env = process.env;
+  // Cloudflare Pages may build from a shallow clone; fall back to the commit it reports.
   const sha = run(`git log -1 --format=%h -- ${quoted}`) || (env.CF_PAGES_COMMIT_SHA ?? env.GITHUB_SHA ?? '').slice(0, 7);
   const date = run(`git log -1 --format=%cI -- ${quoted}`);
   const repo = env.GITHUB_REPOSITORY || configuredRepo;

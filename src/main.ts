@@ -13,6 +13,9 @@ const fmtDate = (iso: string) => {
   try { return new Date(iso).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return iso; }
 };
 
+/* ------------------------------------------------------------------ */
+/* Shell                                                               */
+
 const sections = toc.filter((t) => t.level === 2);
 const childrenOf = (id: string) => {
   const i = toc.findIndex((t) => t.id === id);
@@ -172,6 +175,9 @@ const $ = <T extends HTMLElement = HTMLElement>(sel: string, root: ParentNode = 
 const $$ = <T extends HTMLElement = HTMLElement>(sel: string, root: ParentNode = document) => [...root.querySelectorAll(sel)] as T[];
 const doc = $('.doc');
 
+/* ------------------------------------------------------------------ */
+/* Toasts                                                              */
+
 function toast(message: string, kind: 'success' | 'info' | 'error' = 'info') {
   const el = document.createElement('div');
   el.className = `toast toast-${kind}`;
@@ -181,13 +187,19 @@ function toast(message: string, kind: 'success' | 'info' | 'error' = 'info') {
   setTimeout(() => el.remove(), 3000);
 }
 
+/* ------------------------------------------------------------------ */
+/* Theme                                                               */
+
 $('[data-theme-toggle]').addEventListener('click', () => {
   const root = document.documentElement;
   const current = root.dataset.theme ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = current === 'dark' ? 'light' : 'dark';
   root.dataset.theme = next;
-  try { localStorage.setItem('ntp-theme', next); } catch {}
+  try { localStorage.setItem('ntp-theme', next); } catch { /* ignore */ }
 });
+
+/* ------------------------------------------------------------------ */
+/* Environment + credentials                                           */
 
 function renderEnv() {
   const configured = store.isConfigured();
@@ -250,9 +262,13 @@ $('[data-clear]').addEventListener('click', () => {
 store.subscribe(renderEnv);
 renderEnv();
 
+/* ------------------------------------------------------------------ */
+/* Document enhancements                                               */
+
 const refs: Refs = { statuses: new Map(), errors: new Map(), testCards: [] };
 const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 
+// Section numbers in headings become styled badges.
 $$('.doc h2, .doc h3').forEach((h) => {
   const first = h.firstChild;
   if (first?.nodeType !== Node.TEXT_NODE) return;
@@ -265,6 +281,7 @@ $$('.doc h2, .doc h3').forEach((h) => {
   h.prepend(badge);
 });
 
+// Lead paragraph in the hero comes from the guide's "Scop" row, when present.
 for (const row of $$('.doc tr')) {
   const cells = $$('td', row);
   if (cells.length === 2 && norm(cells[0].textContent ?? '') === 'scop') {
@@ -273,6 +290,7 @@ for (const row of $$('.doc tr')) {
   }
 }
 
+// Copy buttons on static code blocks.
 doc.addEventListener('click', async (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-copy]');
   if (btn) {
@@ -289,11 +307,13 @@ doc.addEventListener('click', async (e) => {
   }
 });
 
+// Tables with a known shape get richer presentation.
 for (const wrap of $$('.doc .table-wrap')) {
   const table = $('table', wrap);
   const headers = $$('thead th', table).map((th) => norm(th.textContent ?? ''));
   const rows = $$('tbody tr', table).map((tr) => $$('td', tr));
 
+  // Payment status codes → colored chips + lookup for responses.
   if (headers[0] === 'cod' && headers[1] === 'status') {
     wrap.classList.add('t-status');
     for (const [code, status, desc] of rows) {
@@ -305,6 +325,7 @@ for (const wrap of $$('.doc .table-wrap')) {
     continue;
   }
 
+  // Error codes → lookup for responses.
   if (headers.length === 2 && headers[0] === 'cod') {
     wrap.classList.add('t-codes');
     for (const [code, desc] of rows) {
@@ -314,6 +335,7 @@ for (const wrap of $$('.doc .table-wrap')) {
     continue;
   }
 
+  // Sandbox test cards → used by the "Card de test" helper in examples.
   if (headers.some((h) => h.includes('numar card'))) {
     wrap.classList.add('t-cards');
     for (const [num, result] of rows) {
@@ -323,6 +345,7 @@ for (const wrap of $$('.doc .table-wrap')) {
     continue;
   }
 
+  // Step-by-step tables → vertical timeline.
   if (headers[0] === 'pas') {
     const ol = document.createElement('ol');
     ol.className = 'steps';
@@ -340,6 +363,7 @@ for (const wrap of $$('.doc .table-wrap')) {
     continue;
   }
 
+  // Changelog → newest first, as a timeline.
   if (headers[0]?.startsWith('versiune') && headers.includes('data')) {
     const idx = (name: string) => headers.findIndex((h) => h.startsWith(name));
     const items = rows
@@ -365,9 +389,11 @@ for (const wrap of $$('.doc .table-wrap')) {
     continue;
   }
 
+  // Tables of URLs (endpoints / consoles) → compact monospace links.
   if ($$('a', table).length >= 2) wrap.classList.add('t-links');
 }
 
+// Interactive checklist (☐ items), persisted per device.
 for (const ul of $$('.doc ul')) {
   const items = $$(':scope > li', ul).filter((li) => /^\s*[☐☑✅]/.test(li.textContent ?? ''));
   if (!items.length || items.length !== ul.children.length) continue;
@@ -394,6 +420,7 @@ for (const ul of $$('.doc ul')) {
   update();
 }
 
+// Glossary paragraphs ("Term  Definition") → term / definition list.
 const glossary = $$('.doc .doc-section').find((s) => norm(s.dataset.section ?? '').startsWith('glosar'));
 if (glossary) {
   glossary.classList.add('glossary');
@@ -420,11 +447,17 @@ if (glossary) {
   $$('h3:not(.gl-letter)', glossary).forEach((h) => h.classList.add('gl-letter'));
 }
 
+/* ------------------------------------------------------------------ */
+/* Playgrounds — mounted up front so anchor positions are stable for deep links. */
+
 const ui = { openCredentials: openDrawer, toast, goTo: (id: string) => document.getElementById(id)?.scrollIntoView() };
 $$('.doc .example').forEach((el) => {
   const ex = examples[Number(el.dataset.example)];
   if (ex) mountPlayground(el, ex, refs, ui);
 });
+
+/* ------------------------------------------------------------------ */
+/* Navigation: scroll spy, progress, rail TOC, mobile menu             */
 
 const headings = toc.map((t) => document.getElementById(t.id)).filter(Boolean) as HTMLElement[];
 let activeId: string | null = null;
@@ -477,6 +510,9 @@ $('[data-menu]').addEventListener('click', () => document.body.classList.toggle(
 $('[data-scrim]').addEventListener('click', closeMenu);
 $$('.sidebar a').forEach((a) => a.addEventListener('click', closeMenu));
 
+/* ------------------------------------------------------------------ */
+/* Search                                                              */
+
 const search = createSearch(docs.search, {
   open: () => document.body.classList.add('palette-open'),
   close: () => document.body.classList.remove('palette-open'),
@@ -489,12 +525,15 @@ addEventListener('keydown', (e) => {
   else if (e.key === 'Escape') { search.close(); if (document.body.classList.contains('drawer-open')) closeDrawer(); closeMenu(); }
 });
 
+// Deep links: scroll after layout settles (fonts, enhancements).
 if (location.hash) {
   const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
   const jump = () => target?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
   requestAnimationFrame(jump);
   document.fonts?.ready.then(jump);
 }
+// Navigation jumps instantly (long animated scrolls are disorienting on a page this long);
+// a short highlight on the target heading shows where you landed.
 function flash(id: string) {
   const el = document.getElementById(id);
   if (!el) return;

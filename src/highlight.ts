@@ -1,3 +1,4 @@
+/** Lazy, small syntax highlighter for generated snippets and API responses (JS regex engine, no WASM). */
 import type { HighlighterCore } from 'shiki/core';
 
 let instance: Promise<HighlighterCore> | undefined;
@@ -20,12 +21,14 @@ function get() {
       engine: createJavaScriptRegexEngine(),
     });
   })();
+  // Don't cache a failure (e.g. a chunk that failed to load) — retry on the next call.
   instance.catch(() => { instance = undefined; });
   return instance;
 }
 
 const plain = (code: string) => `<pre class="shiki github-dark-default"><code>${escapeHtml(code)}</code></pre>`;
 
+/** Never rejects: if Shiki can't load or can't tokenize, the code is still shown, just without colours. */
 export async function highlight(code: string, lang: string) {
   try {
     const hl = await get();

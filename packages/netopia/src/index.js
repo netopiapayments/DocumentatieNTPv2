@@ -1,3 +1,5 @@
+// NETOPIA Payments API v2 — client fără dependențe (Node.js 18+).
+// Sursa de adevăr: „API Ghid de Integrare.md” (secțiunile 2–9).
 import { createHash, createPublicKey, createVerify, randomUUID } from 'node:crypto';
 
 export const BASE_URLS = Object.freeze({
@@ -5,11 +7,13 @@ export const BASE_URLS = Object.freeze({
   production: 'https://secure.mobilpay.ro/pay',
 });
 
+/** IP-urile din care NETOPIA trimite IPN (ghid §3.3). */
 export const IPN_IPS = Object.freeze({
   sandbox: '217.156.103.69',
   production: '217.156.103.68',
 });
 
+/** Coduri de status ale plății (ghid §8.1) + 15 = necesită 3-D Secure (§7.1, §9.3). */
 export const STATUS = Object.freeze({
   NEW: 1,
   PAID: 3,
@@ -28,8 +32,10 @@ const STATUS_NAMES = Object.freeze({
 });
 
 export const statusName = (code) => STATUS_NAMES[Number(code)] ?? 'unknown';
+/** Plata e încasată (autorizată sau capturată). */
 export const isPaid = (code) => Number(code) === STATUS.PAID || Number(code) === STATUS.CONFIRMED;
 
+/** Cheia publică RSA NETOPIA pentru JWT-ul IPN (RS512), aceeași în Sandbox și Producție (ghid §3.4). */
 export const NETOPIA_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy6pUDAFLVul4y499gz1P
 gGSvTSc82U3/ih3e5FDUs/F0Jvfzc4cew8TrBDrw7Y+AYZS37D2i+Xi5nYpzQpu7
@@ -40,6 +46,7 @@ tX2aJkqp4PV3o5kI4bqHq/MS7HVJ7yxtj/p8kawlVYipGsQj3ypgltQ3bnYV/LRq
 8QIDAQAB
 -----END PUBLIC KEY-----`;
 
+/** Răspunsul pe care notifyUrl trebuie să-l întoarcă (HTTP 200) ca NETOPIA să nu retrimită IPN-ul. */
 export const IPN_ACK = Object.freeze({ errorCode: 0 });
 
 export class NetopiaError extends Error {
@@ -52,6 +59,7 @@ export class NetopiaError extends Error {
   }
 }
 
+/** Dată ISO 8601 cu offset local, ex. 2026-11-11T17:31:13+02:00. */
 export function isoDateTime(d = new Date()) {
   const pad = (n) => String(Math.abs(n)).padStart(2, '0');
   const off = -d.getTimezoneOffset();
@@ -66,6 +74,9 @@ export const isValidPosSignature = (s) => typeof s === 'string' && POS_SIGNATURE
 const envBool = (v) => v != null && /^(1|true|yes|da)$/i.test(String(v).trim());
 
 export class Netopia {
+  /**
+   * @param {import('./index').NetopiaOptions} opts
+   */
   constructor(opts = {}) {
     const { apiKey, posSignature, posID } = opts;
     if (!apiKey) throw new TypeError('Netopia: lipsește apiKey');
@@ -85,6 +96,12 @@ export class Netopia {
     if (typeof this.fetch !== 'function') throw new TypeError('Netopia: fetch indisponibil — folosiți Node.js 18+ sau pasați opts.fetch');
   }
 
+  /**
+   * Construiește clientul din variabile de mediu:
+   * NETOPIA_API_KEY, NETOPIA_POS_SIGNATURE, NETOPIA_POS_ID, NETOPIA_SANDBOX,
+   * NETOPIA_NOTIFY_URL / NETOPIA_REDIRECT_URL / NETOPIA_CANCEL_URL
+   * (sau APP_URL / NETOPIA_APP_URL, din care se deduc /netopia/notify și /netopia/return).
+   */
   static fromEnv(env = process.env, overrides = {}) {
     const app = (env.NETOPIA_APP_URL ?? env.APP_URL ?? '').replace(/\/+$/, '');
     return new Netopia({
@@ -130,12 +147,17 @@ export class Netopia {
     return data;
   }
 
+  /**
+   * Inițiază o plată (ghid §5.1). Întoarce paymentURL pentru redirect.
+   * @param {import('./index').StartPaymentInput} input
+   */
   async startPayment(input) {
     if (input == null || input.amount == null) throw new TypeError('startPayment: lipsește amount');
     const notifyUrl = input.notifyUrl ?? this.notifyUrl;
     const redirectUrl = input.redirectUrl ?? this.redirectUrl;
     if (!notifyUrl) throw new TypeError('startPayment: lipsește notifyUrl (în opțiunile clientului sau în input)');
     if (input.token && !input.ipAddress) {
+      // Ghid §7.1: banca procesatoare respinge plățile cu token fără IP-ul plătitorului.
       throw new TypeError('startPayment: ipAddress este obligatoriu pentru plățile cu token');
     }
     const orderID = input.orderID ?? `ORD-${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -181,26 +203,31 @@ export class Netopia {
     };
   }
 
+  /** Interogare status (ghid §6.3). */
   async getStatus({ ntpID, orderID, posID = this.posID } = {}) {
     if (!posID) throw new TypeError('getStatus: lipsește posID (NETOPIA_POS_ID)');
     return this.request('/operation/status', { posID: String(posID), ntpID: ntpID != null ? String(ntpID) : undefined, orderID });
   }
 
+  /** Credit / refund total sau parțial (ghid §6.1). */
   async refund({ ntpID, amount }) {
     if (!ntpID) throw new TypeError('refund: lipsește ntpID');
     if (amount == null) throw new TypeError('refund: lipsește amount');
     return this.request('/operation/credit', { ntpID: String(ntpID), amount });
   }
 
+  /** Expirarea unui link de plată (ghid §6.2). */
   async expire({ ntpID, orderID, posID = this.posID } = {}) {
     if (!posID) throw new TypeError('expire: lipsește posID (NETOPIA_POS_ID)');
     return this.request('/operation/expire', { posID: String(posID), ntpID: ntpID != null ? String(ntpID) : undefined, orderID });
   }
 
+  /** Verifică un IPN cu cheia publică a clientului (vezi verifyIpn). */
   verifyIpn(rawBody, headers, opts = {}) {
     return verifyIpn(rawBody, headers, { publicKey: this.publicKey, posSignature: this.posSignature, ...opts });
   }
 
+  /** IP-ul din care trebuie să vină IPN-ul pentru mediul curent. */
   isNetopiaIp(ip) {
     return normalizeIp(ip) === IPN_IPS[this.environment];
   }
@@ -210,10 +237,11 @@ const normalizeIp = (ip) => String(ip ?? '').trim().replace(/^::ffff:/, '');
 
 const b64urlDecode = (s) => Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
 
+/** Extrage JWT-ul din headere (Authorization: [Bearer] <jwt> sau Verification-token). */
 export function extractIpnToken(headers) {
   if (!headers) return undefined;
   const get = (name) => {
-    if (typeof headers.get === 'function') return headers.get(name) ?? undefined;
+    if (typeof headers.get === 'function') return headers.get(name) ?? undefined; // Fetch Headers
     const key = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase());
     const v = key ? headers[key] : undefined;
     return Array.isArray(v) ? v[0] : v;
@@ -223,6 +251,11 @@ export function extractIpnToken(headers) {
   return String(raw).replace(/^(Bearer|Token)\s+/i, '').trim() || undefined;
 }
 
+/**
+ * Verifică autenticitatea unui IPN (ghid §3.4):
+ * JWT RS512 semnat de NETOPIA, iar claim-ul `sub` = SHA-512 al body-ului raw.
+ * @returns {{ valid: true, payload: object, claims: object } | { valid: false, reason: string, payload?: object }}
+ */
 export function verifyIpn(rawBody, headers, { publicKey = NETOPIA_PUBLIC_KEY, posSignature, now = Date.now() } = {}) {
   const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody ?? ''), 'utf8');
   let payload;
@@ -252,6 +285,7 @@ export function verifyIpn(rawBody, headers, { publicKey = NETOPIA_PUBLIC_KEY, po
 
   const digest = createHash('sha512').update(body).digest();
   const sub = String(claims.sub ?? '');
+  // NETOPIA trimite hash-ul în base64; acceptăm și base64url / hex pentru robustețe.
   const subOk = sub === digest.toString('base64')
     || sub === digest.toString('base64url')
     || sub.toLowerCase() === digest.toString('hex');
@@ -264,6 +298,7 @@ export function verifyIpn(rawBody, headers, { publicKey = NETOPIA_PUBLIC_KEY, po
   return { valid: true, payload, claims };
 }
 
+/** Rezumat util dintr-un IPN valid. */
 export function parseIpn(payload) {
   const p = payload?.payment ?? {};
   return {

@@ -1,3 +1,4 @@
+/** ⌘K command palette over every heading and its text in the guide. */
 import type { SearchEntry } from 'virtual:netopia-docs';
 import { escapeHtml } from './highlight';
 
